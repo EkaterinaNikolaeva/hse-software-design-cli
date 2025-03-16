@@ -1,7 +1,7 @@
 package cli;
 
 public class Main {
-    public static String HelloWorld() {
+     public static String HelloWorld() {
         return "HelloWorld";
     }
 
