@@ -1,6 +1,5 @@
 package cli.pipelineexecutor;
 
-import cli.exceptions.ExitCommandException;
 import cli.model.*;
 import cli.commandexecutor.CommandExecutor;
 
@@ -8,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -38,15 +36,7 @@ public class PipelineExecutorImpl implements PipelineExecutor {
                 InputStream nextInput = (i < commands.size() - 1) ? new PipedInputStream((PipedOutputStream) currentOutput) : null;
 
                 InputStream finalInput = input;
-                Callable<CommandResult> task = () -> {
-                    try {
-                        return commandExecutor.execute(command, finalInput, currentOutput);
-                    } catch (ExitCommandException e) {
-                        throw e;
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                };
+                Callable<CommandResult> task = () -> commandExecutor.execute(command, finalInput, currentOutput);
 
                 Future<CommandResult> future = executor.submit(task);
                 CommandResult result = future.get();
