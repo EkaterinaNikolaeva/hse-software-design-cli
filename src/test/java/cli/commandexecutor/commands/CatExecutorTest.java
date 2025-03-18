@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.model.CommandOptions;
 import cli.model.CommandResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,7 +29,7 @@ class CatExecutorTest {
     @Test
     void testExecuteValid() throws IOException {
         Files.writeString(testFile, "Hello, World!", StandardOpenOption.WRITE);
-        CommandResult result = catExecutor.execute(List.of(testFile.toString()), Collections.emptyList());
+        CommandResult result = catExecutor.execute(List.of(testFile.toString()), new CommandOptions());
         assertEquals(0, result.exitCode());
         assertEquals("Hello, World!", result.output());
     }
@@ -35,7 +38,7 @@ class CatExecutorTest {
     void testExecuteMultilineFile() throws IOException {
         String content = "aba\ncaba\nhello!";
         Files.writeString(testFile, content, StandardOpenOption.WRITE);
-        CommandResult result = catExecutor.execute(List.of(testFile.toString()), Collections.emptyList());
+        CommandResult result = catExecutor.execute(List.of(testFile.toString()), new CommandOptions());
         assertEquals(0, result.exitCode());
         assertEquals(content, result.output());
     }
@@ -47,22 +50,31 @@ class CatExecutorTest {
         Path secondFile = Files.createTempFile("secondFile", ".txt");
         String contentSecondFile = "some content\nother\n";
         Files.writeString(secondFile, contentSecondFile, StandardOpenOption.WRITE);
-        CommandResult result = catExecutor.execute(List.of(testFile.toString(), secondFile.toString()), Collections.emptyList());
+        CommandResult result = catExecutor.execute(List.of(testFile.toString(), secondFile.toString()), new CommandOptions());
         assertEquals(0, result.exitCode());
         assertEquals(content + contentSecondFile, result.output());
     }
 
     @Test
     void testExecuteWithNonExistentFile() {
-        CommandResult result = catExecutor.execute(List.of("nonexistent.txt"), Collections.emptyList());
+        CommandResult result = catExecutor.execute(List.of("nonexistent.txt"), new CommandOptions());
         assertEquals(1, result.exitCode());
         assertEquals("cat: cannot read file nonexistent.txt", result.output());
     }
 
     @Test
     void testExecuteWithNoArguments() {
-        CommandResult result = catExecutor.execute(Collections.emptyList(), Collections.emptyList());
+        CommandResult result = catExecutor.execute(Collections.emptyList(), new CommandOptions());
         assertEquals(1, result.exitCode());
         assertEquals("cat: files are not specified", result.output());
+    }
+
+    @Test
+    void testExecuteWithHelpFlag() {
+        Map<String, List<String>> helpOptions = new HashMap<>();
+        helpOptions.put("help", null);
+        CommandResult result = catExecutor.execute(Collections.emptyList(), new CommandOptions(helpOptions));
+        assertEquals(0, result.exitCode());
+        assertEquals("Get files' content", result.output());
     }
 }

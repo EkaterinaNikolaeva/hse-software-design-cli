@@ -3,9 +3,11 @@ package cli.commandexecutor;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import cli.commandexecutor.commands.PwdExecutor;
 import cli.environment.Environment;
 import cli.exceptions.ExitCommandException;
 import cli.model.Command;
+import cli.model.CommandOptions;
 import cli.model.CommandResult;
 
 public class CommandExecutorImpl implements CommandExecutor {
@@ -44,9 +46,15 @@ public class CommandExecutorImpl implements CommandExecutor {
                 output.write(s.getBytes());
                 return new CommandResult(0, s);
             }
+            case "pwd" -> {
+//                PwdExecutor pwdExecutor = new PwdExecutor();
+//                pwdExecutor.execute(command.args(), command.options())
+
+            }
             default -> {
                 return new CommandResult(1, "Invalid command");
             }
         }
+        return new CommandResult(0, "");
     }
 }
