@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.model.CommandOptions;
 import cli.model.CommandResult;
 
 import java.io.IOException;
@@ -13,9 +14,9 @@ public class CatExecutor implements InternalCommandExecutor {
     private final static String flagHelpMessage = "help";
 
     @Override
-    public CommandResult execute(List<String> args, List<String> flags) {
-        if (flags.contains(helpMessage)) {
-            return new CommandResult(0, flagHelpMessage);
+    public CommandResult execute(List<String> args, CommandOptions options) {
+        if (options.containsOption(flagHelpMessage)) {
+            return new CommandResult(0, helpMessage);
         }
         if (args.isEmpty()) {
             return new CommandResult(1, "cat: files are not specified");
