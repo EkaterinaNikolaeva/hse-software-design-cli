@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import cli.commandexecutor.commands.PwdExecutor;
+import cli.commandexecutor.commands.WcExecutor;
 import cli.environment.Environment;
 import cli.exceptions.ExitCommandException;
 import cli.model.Command;
@@ -28,7 +29,9 @@ public class CommandExecutorImpl implements CommandExecutor {
 
     @Override
     public CommandResult execute(Command command, InputStream input, OutputStream output) throws Exception { //TODO Current for testing only + think about
+        output.write(command.name().getBytes());
         switch (command.name()) {
+
             case "exit" -> throw new ExitCommandException();
             case "ping" -> {
                 String s = "pong\n";
@@ -47,9 +50,9 @@ public class CommandExecutorImpl implements CommandExecutor {
                 return new CommandResult(0, s);
             }
             case "pwd" -> {
-//                PwdExecutor pwdExecutor = new PwdExecutor();
-//                pwdExecutor.execute(command.args(), command.options())
-
+                PwdExecutor pwdExecutor = new PwdExecutor();
+                CommandResult commandResult = pwdExecutor.execute(command.args(), command.options());
+                output.write(commandResult.output().getBytes());
             }
             default -> {
                 return new CommandResult(1, "Invalid command");

@@ -15,7 +15,7 @@ public class CatExecutor implements InternalCommandExecutor {
 
     @Override
     public CommandResult execute(List<String> args, CommandOptions options) {
-        if (options.containsOption(flagHelpMessage)) {
+        if (options != null && options.containsOption(flagHelpMessage)) {
             return new CommandResult(0, helpMessage);
         }
         if (args.isEmpty()) {
