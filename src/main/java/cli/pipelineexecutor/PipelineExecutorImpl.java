@@ -1,5 +1,6 @@
 package cli.pipelineexecutor;
 
+import cli.exceptions.ExitCommandException;
 import cli.model.*;
 import cli.commandexecutor.CommandExecutor;
 
@@ -8,10 +9,7 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class PipelineExecutorImpl implements PipelineExecutor {
     private final CommandExecutor commandExecutor;
@@ -25,6 +23,7 @@ public class PipelineExecutorImpl implements PipelineExecutor {
         if (commands.isEmpty()) {
             return;
         }
+        boolean exitFlag = false;
         try (ExecutorService executor = Executors.newFixedThreadPool(commands.size())) {
             InputStream input = firstInput;
             OutputStream output;
@@ -36,17 +35,24 @@ public class PipelineExecutorImpl implements PipelineExecutor {
                 InputStream nextInput = (i < commands.size() - 1) ? new PipedInputStream((PipedOutputStream) currentOutput) : null;
 
                 InputStream finalInput = input;
-                Callable<CommandResult> task = () -> commandExecutor.execute(command, finalInput, currentOutput);
-
-                Future<CommandResult> future = executor.submit(task);
-                CommandResult result = future.get();
+                try {
+                    Callable<CommandResult> task = () -> commandExecutor.execute(command, finalInput, currentOutput);
+                    Future<CommandResult> future = executor.submit(task);
+                    future.get();
+                } catch (ExecutionException e) {
+                    exitFlag = true;
+                    break;
+                }
 
                 if (nextInput != null) {
                     input = nextInput;
                 }
             }
-
+            lastOutput.flush();
             executor.shutdown();
+            if (exitFlag) {
+                throw new ExitCommandException();
+            }
         }
 
 

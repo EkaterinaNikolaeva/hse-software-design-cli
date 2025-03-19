@@ -5,7 +5,9 @@ import cli.model.CommandResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -27,7 +29,7 @@ class WcExecutorTest {
     @Test
     void testWcWithoutFlags() throws Exception {
         Files.writeString(testFile, "aba caba\nhello, world\n");
-        CommandResult result = wcExecutor.execute(List.of(testFile.toString()), null);
+        CommandResult result = wcExecutor.execute(List.of(testFile.toString()), null, System.in, System.out);
         assertEquals(0, result.exitCode());
         String[] output = result.output().split(" ");
         assertEquals("2", output[0]);
@@ -43,7 +45,7 @@ class WcExecutorTest {
         Map<String, List<String>> wOption = new HashMap<>();
         wOption.put("w", null);
         CommandOptions options = new CommandOptions(wOption);
-        CommandResult result = wcExecutor.execute(List.of(testFile.toString()), options);
+        CommandResult result = wcExecutor.execute(List.of(testFile.toString()), options, System.in, System.out);
         assertEquals(0, result.exitCode());
         assertTrue(result.output().contains("5"));
     }
@@ -51,9 +53,11 @@ class WcExecutorTest {
     @Test
     void testWcNoFile() {
         WcExecutor executor = new WcExecutor();
-        CommandResult result = executor.execute(List.of(), null);
-        assertEquals(1, result.exitCode());
-        assertEquals("wc: no file specified", result.output());
+        String text = "hello\nworld\n";
+        InputStream inputStream = new ByteArrayInputStream(text.getBytes());
+        CommandResult result = executor.execute(List.of(), null, inputStream, System.out);
+        assertEquals(0, result.exitCode());
+        assertEquals("2 2 10\n", result.output());
     }
 
     @Test
@@ -65,7 +69,7 @@ class WcExecutorTest {
         options.put("w", null);
         options.put("l", null);
         WcExecutor executor = new WcExecutor();
-        CommandResult result = executor.execute(List.of(testFile.toString(), secondFile.toString()), new CommandOptions(options));
+        CommandResult result = executor.execute(List.of(testFile.toString(), secondFile.toString()), new CommandOptions(options), System.in, System.out);
         assertEquals(0, result.exitCode());
         String output = result.output();
         String[] lines = output.split(System.lineSeparator());
