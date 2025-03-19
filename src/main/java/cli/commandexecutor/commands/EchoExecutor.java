@@ -18,7 +18,7 @@ public class EchoExecutor implements InternalCommandExecutor {
         if (options != null && options.containsOption(FLAG_HELP)) {
             return new CommandResult(0, HELP_MESSAGE);
         }
-        String output = String.join(" ", args) + System.lineSeparator();
+        String output = String.join(" ", args);
         try {
             outputStream.write(output.getBytes());
         } catch (IOException e) {
