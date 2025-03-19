@@ -20,7 +20,7 @@ public class EchoExecutor implements InternalCommandExecutor {
         }
         String output = String.join(" ", args);
         try {
-            outputStream.write(output.getBytes());
+            outputStream.write((output + System.lineSeparator()).getBytes() );
         } catch (IOException e) {
             return new CommandResult(1, "echo: cannot write to output stream");
         }

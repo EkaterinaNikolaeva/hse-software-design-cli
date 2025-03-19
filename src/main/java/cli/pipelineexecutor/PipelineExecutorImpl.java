@@ -1,6 +1,5 @@
 package cli.pipelineexecutor;
 
-import cli.exceptions.ExitCommandException;
 import cli.model.*;
 import cli.commandexecutor.CommandExecutor;
 
@@ -23,10 +22,8 @@ public class PipelineExecutorImpl implements PipelineExecutor {
         if (commands.isEmpty()) {
             return;
         }
-        boolean exitFlag = false;
         try (ExecutorService executor = Executors.newFixedThreadPool(commands.size())) {
             InputStream input = firstInput;
-            OutputStream output;
 
             for (int i = 0; i < commands.size(); i++) {
                 Command command = commands.get(i);
@@ -35,14 +32,9 @@ public class PipelineExecutorImpl implements PipelineExecutor {
                 InputStream nextInput = (i < commands.size() - 1) ? new PipedInputStream((PipedOutputStream) currentOutput) : null;
 
                 InputStream finalInput = input;
-                try {
-                    Callable<CommandResult> task = () -> commandExecutor.execute(command, finalInput, currentOutput);
-                    Future<CommandResult> future = executor.submit(task);
-                    future.get();
-                } catch (ExecutionException e) {
-                    exitFlag = true;
-                    break;
-                }
+                Callable<CommandResult> task = () -> commandExecutor.execute(command, finalInput, currentOutput);
+                Future<CommandResult> future = executor.submit(task);
+                future.get();
 
                 if (nextInput != null) {
                     input = nextInput;
@@ -50,9 +42,6 @@ public class PipelineExecutorImpl implements PipelineExecutor {
             }
             lastOutput.flush();
             executor.shutdown();
-            if (exitFlag) {
-                throw new ExitCommandException();
-            }
         }
 
 
