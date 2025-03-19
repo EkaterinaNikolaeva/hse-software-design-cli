@@ -13,9 +13,14 @@ import cli.commandexecutor.commands.InternalCommandExecutor;
 import cli.commandexecutor.commands.PwdExecutor;
 import cli.commandexecutor.commands.WcExecutor;
 import cli.environment.Environment;
+import cli.exceptions.ExitCommandException;
 import cli.model.Command;
 import cli.model.CommandResult;
 
+/**
+ * The CommandExecutorImpl class implements the CommandExecutor interface.
+ * It is responsible for executing both built-in and external commands.
+ */
 public class CommandExecutorImpl implements CommandExecutor {
     private final Environment environment;
     private final Map<String, InternalCommandExecutor> builtInCommands = new HashMap<>();
@@ -34,7 +39,7 @@ public class CommandExecutorImpl implements CommandExecutor {
         builtInCommands.put("exit", new ExitExecutor());
     }
 
-    private CommandResult executeBuiltIn(Command command, InputStream input, OutputStream output) throws IOException {
+    private CommandResult executeBuiltIn(Command command, InputStream input, OutputStream output) throws ExitCommandException {
         InternalCommandExecutor executor = builtInCommands.get(command.name());
         if (executor != null) {
             return executor.execute(command.args(), command.options(), input, output);
@@ -66,8 +71,19 @@ public class CommandExecutorImpl implements CommandExecutor {
         }
     }
 
+    /**
+     * Executes a command (either built-in or external).
+     * The method first checks if the command is a built-in command.
+     * If the command is not built-in, it treats it as an external command and runs it via a new process.
+     *
+     * @param command The command to execute.
+     * @param input The input stream for the command.
+     * @param output The output stream for the command.
+     * @return CommandResult containing the execution status and output.
+     * @throws ExitCommandException If exit command was provided.
+     */
     @Override
-    public CommandResult execute(Command command, InputStream input, OutputStream output) throws Exception { //TODO Current for testing only + think about
+    public CommandResult execute(Command command, InputStream input, OutputStream output) throws ExitCommandException {
         if (builtInCommands.containsKey(command.name())) {
             return executeBuiltIn(command, input, output);
         } else {
