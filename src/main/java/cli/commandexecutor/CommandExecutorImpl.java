@@ -1,63 +1,78 @@
 package cli.commandexecutor;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import cli.commandexecutor.commands.CatExecutor;
+import cli.commandexecutor.commands.EchoExecutor;
+import cli.commandexecutor.commands.ExitExecutor;
+import cli.commandexecutor.commands.InternalCommandExecutor;
 import cli.commandexecutor.commands.PwdExecutor;
 import cli.commandexecutor.commands.WcExecutor;
 import cli.environment.Environment;
-import cli.exceptions.ExitCommandException;
 import cli.model.Command;
-import cli.model.CommandOptions;
 import cli.model.CommandResult;
 
 public class CommandExecutorImpl implements CommandExecutor {
+    private final Environment environment;
+    private final Map<String, InternalCommandExecutor> builtInCommands = new HashMap<>();
 
     public CommandExecutorImpl(Environment environment) {
         this.environment = environment;
+        registerBuiltInCommands();
+
     }
 
-    final Environment environment;
-
-    private CommandResult executeBuiltIn(Command command) {
-        return null;
+    private void registerBuiltInCommands() {
+        builtInCommands.put("pwd", new PwdExecutor());
+        builtInCommands.put("cat", new CatExecutor());
+        builtInCommands.put("echo", new EchoExecutor());
+        builtInCommands.put("wc", new WcExecutor());
+        builtInCommands.put("exit", new ExitExecutor());
     }
 
-    private CommandResult executeExternal(Command command) {
-        return null;
+    private CommandResult executeBuiltIn(Command command, InputStream input, OutputStream output) throws IOException {
+        InternalCommandExecutor executor = builtInCommands.get(command.name());
+        if (executor != null) {
+            return executor.execute(command.args(), command.options(), input, output);
+        }
+        return new CommandResult(1, "Unknown built-in command: " + command.name());
+    }
+
+    private CommandResult executeExternal(Command command, InputStream input, OutputStream output) {
+        List<String> commandWithArgs = new ArrayList<>();
+        commandWithArgs.add(command.name());
+        commandWithArgs.addAll(command.args());
+        ProcessBuilder processBuilder = new ProcessBuilder(commandWithArgs);
+        processBuilder.directory(new File(System.getProperty("user.dir")));
+        processBuilder.redirectErrorStream(true);
+        try {
+            Process process = processBuilder.start();
+            if (input != System.in) {
+                try (OutputStream processInput = process.getOutputStream()) {
+                    input.transferTo(processInput);
+                }
+            }
+            try (InputStream processOutput = process.getInputStream()) {
+                processOutput.transferTo(output);
+            }
+            int exitCode = process.waitFor();
+            return new CommandResult(exitCode, "");
+        } catch (IOException | InterruptedException e) {
+            return new CommandResult(1, "Error executing external command: " + e.getMessage());
+        }
     }
 
     @Override
     public CommandResult execute(Command command, InputStream input, OutputStream output) throws Exception { //TODO Current for testing only + think about
-        output.write(command.name().getBytes());
-        switch (command.name()) {
-
-            case "exit" -> throw new ExitCommandException();
-            case "ping" -> {
-                String s = "pong\n";
-                output.write(s.getBytes());
-                return new CommandResult(0, s);
-            }
-            case "echo" -> {
-                StringBuilder sb = new StringBuilder();
-                int c;
-                while ((c = input.read()) != -1 && c != '\n') { //TODO Think about '\n' as a EOF symbol or how to read all stream better
-                    sb.append((char) c);
-                }
-                String s = sb.toString();
-                s += "\n";
-                output.write(s.getBytes());
-                return new CommandResult(0, s);
-            }
-            case "pwd" -> {
-                PwdExecutor pwdExecutor = new PwdExecutor();
-                CommandResult commandResult = pwdExecutor.execute(command.args(), command.options());
-                output.write(commandResult.output().getBytes());
-            }
-            default -> {
-                return new CommandResult(1, "Invalid command");
-            }
+        if (builtInCommands.containsKey(command.name())) {
+            return executeBuiltIn(command, input, output);
+        } else {
+            return executeExternal(command, input, output);
         }
-        return new CommandResult(0, "");
+
     }
 }

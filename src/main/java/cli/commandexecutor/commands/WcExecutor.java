@@ -2,9 +2,10 @@ package cli.commandexecutor.commands;
 
 import cli.model.CommandResult;
 import cli.model.CommandOptions;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -27,33 +28,51 @@ public class WcExecutor implements InternalCommandExecutor {
         if (options == null || options.containsOption(FLAG_BYTES)) {
             output.append(bytes).append(" ");
         }
-        output.append(file).append("\n");
+        if (file != null) {
+            output.append(file);
+        } else {
+            output.delete(output.length() - 1, output.length());
+        }
+        output.append(System.lineSeparator());
     }
 
-    private int processWordsNumber(@NotNull StringBuilder output, @NotNull String content) {
-        int words = content.split("\\s+").length;
-        output.append(words).append(" ");
-        return words;
-    }
-
-    private int processBytesNumber(@NotNull StringBuilder output, @NotNull String content) {
-        int bytes = content.getBytes().length;
-        output.append(bytes).append(" ");
-        return bytes;
+    @Contract("_, _, _ -> new")
+    private @NotNull CommandResult processInputStream(CommandOptions options, InputStream inputStream, OutputStream outputStream) {
+        StringBuilder output = new StringBuilder();
+        int lines = 0;
+        int words = 0;
+        int bytes = 0;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines++;
+                words += line.split("\\s+").length;
+                bytes += line.getBytes().length;
+            }
+        } catch (IOException e) {
+            return new CommandResult(1, "wc: error reading input stream");
+        }
+        printStatistics(options, output, null, lines, words, bytes);
+        try {
+            outputStream.write(output.toString().getBytes());
+        } catch (IOException e) {
+            return new CommandResult(1, "wc: error writing output stream");
+        }
+        return new CommandResult(0, output.toString());
     }
 
     @Override
-    public CommandResult execute(List<String> args, CommandOptions options) {
+    public CommandResult execute(List<String> args, CommandOptions options, InputStream inputStream, OutputStream outputStream) {
         if (options != null && options.containsOption(FLAG_HELP)) {
             return new CommandResult(0, HELP_MESSAGE);
         }
         if (args.isEmpty()) {
-            return new CommandResult(1, "wc: no file specified");
+            return processInputStream(options, inputStream, outputStream);
         }
-        StringBuilder output = new StringBuilder();
         int totalLines = 0;
         int totalWords = 0;
         int totalBytes = 0;
+        StringBuilder output = new StringBuilder();
         for (String file : args) {
             Path filePath = Path.of(file);
             try {

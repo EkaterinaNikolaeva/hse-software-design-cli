@@ -34,12 +34,8 @@ public class Main {
             try {
                 ParsedInput parsedInput = parser.parse(input);
                 pipelineExecutor.execute(parsedInput, System.in, System.out);
-            } catch (Exception e) {
-                if (e.getCause() instanceof ExitCommandException) {
-                    return;
-                } else {
-                    throw e;
-                }
+            } catch (ExitCommandException e) {
+                return;
             }
         }
     }

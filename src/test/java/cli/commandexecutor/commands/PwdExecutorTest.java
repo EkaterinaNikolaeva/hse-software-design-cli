@@ -22,7 +22,7 @@ class PwdExecutorTest {
 
     @Test
     void testExecuteWithoutFlags() {
-        CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions());
+        CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions(), System.in, System.out);
         assertEquals(0, result.exitCode());
         assertEquals(System.getProperty("user.dir"), result.output());
     }
@@ -31,7 +31,7 @@ class PwdExecutorTest {
     void testExecuteWithHelpFlag() {
         Map<String, List<String>> helpOptions = new HashMap<>();
         helpOptions.put("help", null);
-        CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions(helpOptions));
+        CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions(helpOptions), System.in, System.out);
         assertEquals(0, result.exitCode());
         assertEquals("Get current work directory", result.output());
     }
@@ -40,7 +40,7 @@ class PwdExecutorTest {
     void testExecuteMatchesLaunchDirectory() {
         String launchDir = System.getenv("PWD");
         if (launchDir != null) {
-            CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions());
+            CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions(), System.in, System.out);
             assertEquals(0, result.exitCode());
             assertEquals(launchDir, result.output(), "user.dir is not equal to PWD");
         }
