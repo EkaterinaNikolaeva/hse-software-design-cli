@@ -48,7 +48,7 @@ class EchoExecutorTest {
         options.put("help", null);
         CommandResult result = echoExecutor.execute(List.of("Hello", "world"), new CommandOptions(options), System.in, System.out);
         assertEquals(0, result.exitCode());
-        assertEquals("Display a line of text.", result.output());
+        assertEquals("Display a line of text.\n", result.output());
     }
 
 }

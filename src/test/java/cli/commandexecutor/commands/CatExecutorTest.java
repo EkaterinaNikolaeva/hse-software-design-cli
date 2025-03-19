@@ -77,6 +77,6 @@ class CatExecutorTest {
         helpOptions.put("help", null);
         CommandResult result = catExecutor.execute(Collections.emptyList(), new CommandOptions(helpOptions), System.in, System.out);
         assertEquals(0, result.exitCode());
-        assertEquals("Get files' content", result.output());
+        assertEquals("Get files' content\n", result.output());
     }
 }

@@ -33,7 +33,7 @@ class PwdExecutorTest {
         helpOptions.put("help", null);
         CommandResult result = pwdExecutor.execute(Collections.emptyList(), new CommandOptions(helpOptions), System.in, System.out);
         assertEquals(0, result.exitCode());
-        assertEquals("Get current work directory", result.output());
+        assertEquals("Get current work directory\n", result.output());
     }
 
     @Test
