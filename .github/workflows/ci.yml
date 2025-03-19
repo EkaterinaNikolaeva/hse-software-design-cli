@@ -45,20 +45,3 @@ jobs:
         with:
           name: Coverage Reports
           path: build/reports/jacoco/test
-
-      - name: Display Test Results
-        run: |
-          echo "Test Results Summary:"
-          cat build/test-results/test/*.xml
-
-      - name: Display Coverage Summary
-        run: |
-          echo "Coverage Statistics:"
-          cat build/reports/jacoco/test/jacocoTestReport.xml | grep -E "<counter|LINE|BRANCH"
-
-      - name: Upload to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: build/reports/jacoco/test/jacocoTestReport.xml
-          flags: unittests
-          verbose: true
