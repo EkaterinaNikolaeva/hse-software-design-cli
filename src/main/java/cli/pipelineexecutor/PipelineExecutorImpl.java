@@ -45,22 +45,25 @@ public class PipelineExecutorImpl implements PipelineExecutor {
             for (int i = 0; i < commands.size(); i++) {
                 Command command = commands.get(i);
 
-                OutputStream currentOutput = (i < commands.size() - 1) ? new PipedOutputStream() : lastOutput;
-                InputStream nextInput = (i < commands.size() - 1) ? new PipedInputStream((PipedOutputStream) currentOutput) : null;
+                final boolean isLastCommand = (i == commands.size() - 1);
+                PipedOutputStream pipedOutputStream = !isLastCommand ? new PipedOutputStream() : null;
+                OutputStream currentOutput = !isLastCommand ? pipedOutputStream : lastOutput;
+
+                InputStream nextInput = !isLastCommand ? new PipedInputStream(pipedOutputStream) : null;
 
                 InputStream currentInput = input;
-                Callable<CommandResult> task = () -> commandExecutor.execute(command, currentInput, currentOutput);
-                Future<CommandResult> future = executor.submit(task);
-                future.get();
+                Future<CommandResult> future = executor.submit(() -> {
+                    try (OutputStream out = currentOutput) {
+                        return commandExecutor.execute(command, currentInput, out);
+                    }
+                });
+                future.get(); //TODO Think about CommandResult
 
-                if (nextInput != null) {
+                if (!isLastCommand) {
                     input = nextInput;
                 }
             }
-            lastOutput.flush();
             executor.shutdown();
         }
-
-
     }
 }
