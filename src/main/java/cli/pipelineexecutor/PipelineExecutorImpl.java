@@ -10,6 +10,11 @@ import java.io.PipedOutputStream;
 import java.util.List;
 import java.util.concurrent.*;
 
+/**
+ * The PipelineExecutorImpl class implements the PipelineExecutor interface.
+ * It is responsible for executing a sequence of commands, connecting their inputs and outputs,
+ * and managing the execution process using a thread pool.
+ */
 public class PipelineExecutorImpl implements PipelineExecutor {
     private final CommandExecutor commandExecutor;
 
@@ -17,6 +22,18 @@ public class PipelineExecutorImpl implements PipelineExecutor {
         this.commandExecutor = commandExecutor;
     }
 
+    /**
+     * Executes a pipeline of commands.
+     * The method iterates over each command in the pipeline, executing them sequentially
+     * while connecting their inputs and outputs using piped streams.
+     * It utilizes a thread pool to manage the execution of commands concurrently.
+     *
+     * @param parsedInput The parsed input representing the pipeline of commands.
+     * @param firstInput  The initial input stream for the pipeline.
+     * @param lastOutput  The final output stream for the pipeline.
+     * @throws Exception If any error occurs during pipeline execution.
+     */
+    @Override
     public void execute(ParsedInput parsedInput, InputStream firstInput, OutputStream lastOutput) throws Exception {
         List<Command> commands = parsedInput.commands();
         if (commands.isEmpty()) {
@@ -31,8 +48,8 @@ public class PipelineExecutorImpl implements PipelineExecutor {
                 OutputStream currentOutput = (i < commands.size() - 1) ? new PipedOutputStream() : lastOutput;
                 InputStream nextInput = (i < commands.size() - 1) ? new PipedInputStream((PipedOutputStream) currentOutput) : null;
 
-                InputStream finalInput = input;
-                Callable<CommandResult> task = () -> commandExecutor.execute(command, finalInput, currentOutput);
+                InputStream currentInput = input;
+                Callable<CommandResult> task = () -> commandExecutor.execute(command, currentInput, currentOutput);
                 Future<CommandResult> future = executor.submit(task);
                 future.get();
 
