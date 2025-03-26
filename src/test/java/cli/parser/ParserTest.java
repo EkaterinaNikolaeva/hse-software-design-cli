@@ -51,6 +51,21 @@ class ParserTest {
     }
 
     @Test
+    void testParseCommandWithQuotes() {
+        String input = "\"com\"\'mand\' arg1 arg2";
+
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+        assertEquals("command", command.name());
+        assertEquals(2, command.args().size());
+        assertTrue(command.args().contains("arg1"));
+        assertTrue(command.args().contains("arg2"));
+    }
+
+    @Test
     void testParseCommandWithVariableAssignment() {
         String input = "command | var=123";
 
@@ -90,6 +105,115 @@ class ParserTest {
         List<Command> commands = parsedInput.commands();
 
         assertEquals(0, commands.size());
+    }
+
+    @Test
+    void testParserWithVariableSubstitution() {
+        env.setVariable("HOME", "/user/home");
+        env.setVariable("USER", "john");
+
+        String input = "command $HOME $USER";
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+        assertEquals("command", command.name());
+
+        assertEquals("/user/home john", String.join(" ", command.args()));
+    }
+
+    @Test
+    void testParserWithVarQuotesSubstitution() {
+        env.setVariable("HOME", "/user/home");
+        env.setVariable("USER", "john");
+
+        String input = "command \"$HOME\" \'$USER\'";
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+        assertEquals("command", command.name());
+
+        assertEquals("/user/home $USER", String.join(" ", command.args()));
+    }
+
+    @Test
+    void testParserWithNoVariableSubstitution() {
+        String input = "command $HOME $USER";
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+        assertEquals("command", command.name());
+
+        assertEquals(" ", String.join(" ", command.args()));
+    }
+
+    @Test
+    void testParserWithNoVariableSubstitutionTwice() {
+        env.setVariable("HOME", "/user/home");
+        env.setVariable("USER", "john");
+
+        String input = "command $HOME$USER";
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+        assertEquals("command", command.name());
+
+        assertEquals("/user/homejohn", command.args().get(0));
+    }
+
+    @Test
+    void testParserWithMixedVariablesAndRegularArgs() {
+        env.setVariable("HOME", "/user/home");
+
+        String input = "command $HOME arg2";
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+        assertEquals("command", command.name());
+
+        assertEquals("/user/home arg2", String.join(" ", command.args()));
+    }
+
+    void testParseCommandWithGroupedSingleLetterFlags() {
+        String input = "command -abc value";
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+
+        assertEquals("command", command.name());
+
+        assertTrue(command.options().containsOption("a"));
+        assertTrue(command.options().containsOption("b"));
+        assertTrue(command.options().containsOption("c"));
+        assertEquals(command.options().getAllOptionValues("c"), List.of("value"));
+        ;
+    }
+
+    void testParseCommandWithGroupedLongFlags() {
+        String input = "command --abc value";
+
+        ParsedInput parsedInput = parser.parse(input);
+        List<Command> commands = parsedInput.commands();
+
+        assertEquals(1, commands.size());
+        Command command = commands.get(0);
+
+        assertEquals("command", command.name());
+
+        assertTrue(command.options().containsOption("abc"));
+        assertEquals(command.options().getAllOptionValues("abc"), List.of("value"));
+        ;
     }
 }
 
