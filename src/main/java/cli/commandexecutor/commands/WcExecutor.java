@@ -2,7 +2,6 @@ package cli.commandexecutor.commands;
 
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
