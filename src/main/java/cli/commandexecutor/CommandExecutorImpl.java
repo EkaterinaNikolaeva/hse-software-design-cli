@@ -14,8 +14,9 @@ import cli.commandexecutor.commands.PwdExecutor;
 import cli.commandexecutor.commands.WcExecutor;
 import cli.environment.Environment;
 import cli.exceptions.ExitCommandException;
+import cli.ioenvironment.IOEnvironmentImpl;
 import cli.model.Command;
-import cli.model.CommandResult;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The CommandExecutorImpl class implements the CommandExecutor interface.
@@ -39,15 +40,15 @@ public class CommandExecutorImpl implements CommandExecutor {
         builtInCommands.put("exit", new ExitExecutor());
     }
 
-    private CommandResult executeBuiltIn(Command command, InputStream input, OutputStream output) throws ExitCommandException {
+    private int executeBuiltIn(@NotNull Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
         InternalCommandExecutor executor = builtInCommands.get(command.name());
         if (executor != null) {
-            return executor.execute(command.args(), command.options(), input, output);
+            return executor.execute(command.args(), command.options(), new IOEnvironmentImpl(input, output, error));
         }
-        return new CommandResult(1, "Unknown built-in command: " + command.name());
+        return 1;
     }
 
-    private CommandResult executeExternal(Command command, InputStream input, OutputStream output) {
+    private int executeExternal(@NotNull Command command, InputStream input, OutputStream output, OutputStream error) {
         List<String> commandWithArgs = new ArrayList<>();
         commandWithArgs.add(command.name());
         commandWithArgs.addAll(command.args());
@@ -64,10 +65,14 @@ public class CommandExecutorImpl implements CommandExecutor {
             try (InputStream processOutput = process.getInputStream()) {
                 processOutput.transferTo(output);
             }
-            int exitCode = process.waitFor();
-            return new CommandResult(exitCode, "");
+            return process.waitFor();
         } catch (IOException | InterruptedException e) {
-            return new CommandResult(1, "Error executing external command: " + e.getMessage());
+            try {
+                error.write(("Error executing external command: " + e.getMessage()).getBytes());
+            } catch (IOException ee) {
+
+            }
+            return 1;
         }
     }
 
@@ -83,11 +88,11 @@ public class CommandExecutorImpl implements CommandExecutor {
      * @throws ExitCommandException If exit command was provided.
      */
     @Override
-    public CommandResult execute(Command command, InputStream input, OutputStream output) throws ExitCommandException {
+    public int execute(Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
         if (builtInCommands.containsKey(command.name())) {
-            return executeBuiltIn(command, input, output);
+            return executeBuiltIn(command, input, output, error);
         } else {
-            return executeExternal(command, input, output);
+            return executeExternal(command, input, output, error);
         }
 
     }

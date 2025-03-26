@@ -4,7 +4,6 @@ import cli.commandexecutor.CommandExecutor;
 import cli.exceptions.ExitCommandException;
 import cli.model.Command;
 import cli.model.CommandOptions;
-import cli.model.CommandResult;
 import cli.model.ParsedInput;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,47 +106,50 @@ class MockCommandExecutor implements CommandExecutor {
     private boolean exitCalled = false;
 
     @Override
-    public CommandResult execute(Command command, InputStream input, OutputStream output) throws ExitCommandException, IOException {
-        switch (command.name()) {
-            case "exit" -> {
-                exitCalled = true;
-                throw new ExitCommandException();
-            }
-            case "write_input" -> {
-                StringBuilder sb = new StringBuilder();
-                int c;
-                while ((c = input.read()) != -1) {
-                    sb.append((char) c);
+    public int execute(Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
+        try {
+            switch (command.name()) {
+                case "exit" -> {
+                    exitCalled = true;
+                    throw new ExitCommandException();
                 }
-                String s = sb.toString();
-                output.write(s.getBytes());
-                return new CommandResult(0, "");
-            }
-            case "write_arg" -> {
-                StringBuilder sb = new StringBuilder();
-                for (String args : command.args()) {
-                    sb.append(args);
+                case "write_input" -> {
+                    StringBuilder sb = new StringBuilder();
+                    int c;
+                    while ((c = input.read()) != -1) {
+                        sb.append((char) c);
+                    }
+                    String s = sb.toString();
+                    output.write(s.getBytes());
+                    return 0;
                 }
-                String s = sb.toString();
-                output.write(s.getBytes());
-                return new CommandResult(0, "");
-            }
-            case "write_input_and_arg" -> {
-                StringBuilder sb = new StringBuilder();
-                int c;
-                while ((c = input.read()) != -1) {
-                    sb.append((char) c);
+                case "write_arg" -> {
+                    StringBuilder sb = new StringBuilder();
+                    for (String args : command.args()) {
+                        sb.append(args);
+                    }
+                    String s = sb.toString();
+                    output.write(s.getBytes());
+                    return 0;
                 }
-                for (String args : command.args()) {
-                    sb.append(args);
+                case "write_input_and_arg" -> {
+                    StringBuilder sb = new StringBuilder();
+                    int c;
+                    while ((c = input.read()) != -1) {
+                        sb.append((char) c);
+                    }
+                    for (String args : command.args()) {
+                        sb.append(args);
+                    }
+                    String s = sb.toString();
+                    output.write(s.getBytes());
+                    return 0;
                 }
-                String s = sb.toString();
-                output.write(s.getBytes());
-                return new CommandResult(0, "");
             }
-        }
+        } catch (IOException e) {
 
-        return new CommandResult(1, "Unknown command: " + command.name());
+        }
+        return 1;
     }
 
     public boolean isExitCalled() {

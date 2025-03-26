@@ -1,14 +1,14 @@
 package cli.commandexecutor.commands;
 
-import cli.model.CommandResult;
+import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * The WcExecutor class implements the InternalCommandExecutor interface
@@ -24,13 +24,13 @@ public class WcExecutor implements InternalCommandExecutor {
 
     private void printStatistics(CommandOptions options, @org.jetbrains.annotations.NotNull StringBuilder output,
                                  String file, int lines, int words, int bytes) {
-        if (options == null || options.containsOption(FLAG_LINES)) {
+        if (options.isEmpty() || options.containsOption(FLAG_LINES)) {
             output.append(lines).append(" ");
         }
-        if (options == null || options.containsOption(FLAG_WORDS)) {
+        if (options.isEmpty() || options.containsOption(FLAG_WORDS)) {
             output.append(words).append(" ");
         }
-        if (options == null || options.containsOption(FLAG_BYTES)) {
+        if (options.isEmpty() || options.containsOption(FLAG_BYTES)) {
             output.append(bytes).append(" ");
         }
         if (file != null) {
@@ -41,29 +41,34 @@ public class WcExecutor implements InternalCommandExecutor {
         output.append(System.lineSeparator());
     }
 
-    @Contract("_, _, _ -> new")
-    private @NotNull CommandResult processInputStream(CommandOptions options, InputStream inputStream, OutputStream outputStream) {
+    private @NotNull int processInputStream(CommandOptions options, IOEnvironment ioEnvironment) {
         StringBuilder output = new StringBuilder();
         int lines = 0;
         int words = 0;
         int bytes = 0;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
+        String content;
+        try {
+            content = ioEnvironment.read();
+        } catch (IOException e) {
+            ioEnvironment.writeError("wc: error reading input stream");
+            return 1;
+        }
+        try (Scanner scanner = new Scanner(content)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
                 lines++;
                 words += line.split("\\s+").length;
                 bytes += line.getBytes().length;
             }
-        } catch (IOException e) {
-            return new CommandResult(1, "wc: error reading input stream");
         }
         printStatistics(options, output, null, lines, words, bytes);
         try {
-            outputStream.write(output.toString().getBytes());
+            ioEnvironment.writeOutput(output.toString());
         } catch (IOException e) {
-            return new CommandResult(1, "wc: error writing output stream");
+            ioEnvironment.writeError("wc: error writing output stream");
+            return 1;
         }
-        return new CommandResult(0, output.toString());
+        return 0;
     }
 
     /**
@@ -76,24 +81,23 @@ public class WcExecutor implements InternalCommandExecutor {
      * -c - bytes number.
      * By default, all these flags are used.
      *
-     * @param args         List of file names to be analyzed.
-     * @param options      Command options specifying which statistics to include.
-     * @param inputStream  Input stream used when no files are specified.
-     * @param outputStream Output stream to write the command result.
+     * @param args          List of file names to be analyzed.
+     * @param options       Command options specifying which statistics to include.
+     * @param ioEnvironment input, output and error streams
      * @return CommandResult containing the execution status and output.
      */
     @Override
-    public CommandResult execute(List<String> args, CommandOptions options, InputStream inputStream, OutputStream outputStream) {
+    public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
         if (options != null && options.containsOption(FLAG_HELP)) {
             try {
-                outputStream.write(HELP_MESSAGE.getBytes());
+                ioEnvironment.writeOutput(HELP_MESSAGE);
             } catch (IOException e) {
-                return new CommandResult(1, "wc: cannot write data to output stream");
+                return 1;
             }
-            return new CommandResult(0, HELP_MESSAGE);
+            return 0;
         }
         if (args.isEmpty()) {
-            return processInputStream(options, inputStream, outputStream);
+            return processInputStream(options, ioEnvironment);
         }
         int totalLines = 0;
         int totalWords = 0;
@@ -111,12 +115,18 @@ public class WcExecutor implements InternalCommandExecutor {
                 totalBytes += bytes;
                 printStatistics(options, output, file, lines, words, bytes);
             } catch (IOException e) {
-                return new CommandResult(1, "wc: cannot read file " + file);
+                return 1;
             }
         }
         if (args.size() > 1) {
             printStatistics(options, output, "total", totalLines, totalWords, totalBytes);
         }
-        return new CommandResult(0, output.toString().trim());
+        try {
+            ioEnvironment.writeOutput(output.toString());
+        } catch (IOException e) {
+            ioEnvironment.writeError("wc: cannot write to output stream");
+        }
+
+        return 0;
     }
 }

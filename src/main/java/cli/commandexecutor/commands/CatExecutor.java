@@ -1,7 +1,7 @@
 package cli.commandexecutor.commands;
 
+import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
-import cli.model.CommandResult;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -24,47 +24,49 @@ public class CatExecutor implements InternalCommandExecutor {
      * Else it reads and returns the content of the files provided.
      * If the "help" option is specified, it returns a help message.
      *
-     * @param args         List of file names to be read.
-     * @param options      Command flags.
-     * @param inputStream  Input stream for reading data when no files are specified.
-     * @param outputStream Output stream for writing the command result.
+     * @param args          List of file names to be read.
+     * @param options       Command flags.
+     * @param ioEnvironment input, output and error streams
      * @return CommandResult containing the execution status and output.
      */
     @Override
-    public CommandResult execute(List<String> args, CommandOptions options, InputStream inputStream, OutputStream outputStream) {
+    public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
         if (options != null && options.containsOption(FLAG_HELP_MESSAGE)) {
             try {
-                outputStream.write(HELP_MESSAGE.getBytes());
+                ioEnvironment.writeOutput(HELP_MESSAGE);
             } catch (IOException e) {
-                return new CommandResult(1, "cat: cannot write data to output stream");
+                ioEnvironment.writeError("cat: cannot write data to output stream");
+                return 1;
             }
-            return new CommandResult(0, HELP_MESSAGE);
+            return 0;
         }
         StringBuilder stringBuilder = new StringBuilder();
         if (args.isEmpty()) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    stringBuilder.append(line).append("\n");
-                }
-            } catch (IOException e) {
-                return new CommandResult(1, "cat: error reading input stream");
+            try {
+                String text = ioEnvironment.read();
+                ioEnvironment.writeOutput(text);
+                return 0;
             }
-        } else {
-            for (String file : args) {
-                Path filePath = Path.of(file);
-                try {
-                    stringBuilder.append(Files.readString(filePath));
-                } catch (IOException e) {
-                    return new CommandResult(1, "cat: cannot read file " + file);
-                }
+            catch (IOException e) {
+                ioEnvironment.writeError("cat: error reading input stream");
+                return 1;
+            }
+        }
+        for (String file : args) {
+            Path filePath = Path.of(file);
+            try {
+                stringBuilder.append(Files.readString(filePath));
+            } catch (IOException e) {
+                ioEnvironment.writeError("cat: cannot read file " + file);
+                return 1;
             }
         }
         try {
-            outputStream.write(stringBuilder.toString().getBytes());
+            ioEnvironment.writeOutput(stringBuilder.toString());
         } catch (IOException e) {
-            return new CommandResult(1, "cat: cannot write data to output stream");
+            ioEnvironment.writeError("cat: cannot write data to output stream");
+            return 1;
         }
-        return new CommandResult(0, stringBuilder.toString());
+        return 0;
     }
 }
