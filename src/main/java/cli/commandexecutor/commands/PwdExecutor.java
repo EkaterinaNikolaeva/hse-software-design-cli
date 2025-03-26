@@ -36,7 +36,7 @@ public class PwdExecutor implements InternalCommandExecutor {
             try {
                 ioEnvironment.writeOutput(HELP_MESSAGE);
             } catch (IOException e) {
-                ioEnvironment.writeError("pwd: cannot write data to output stream");
+                ioEnvironment.writeError("pwd: cannot write data to output stream" + System.lineSeparator());
                 return 1;
             }
             return 0;
@@ -45,7 +45,7 @@ public class PwdExecutor implements InternalCommandExecutor {
         try {
             ioEnvironment.writeOutput(curDir + System.lineSeparator());
         } catch (IOException e) {
-            ioEnvironment.writeError("pwd: cannot write to output stream");
+            ioEnvironment.writeError("pwd: cannot write to output stream" + System.lineSeparator());
             return 1;
         }
         return 0;

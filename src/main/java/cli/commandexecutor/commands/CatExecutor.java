@@ -35,7 +35,7 @@ public class CatExecutor implements InternalCommandExecutor {
             try {
                 ioEnvironment.writeOutput(HELP_MESSAGE);
             } catch (IOException e) {
-                ioEnvironment.writeError("cat: cannot write data to output stream");
+                ioEnvironment.writeError("cat: cannot write data to output stream" + System.lineSeparator());
                 return 1;
             }
             return 0;
@@ -46,9 +46,8 @@ public class CatExecutor implements InternalCommandExecutor {
                 String text = ioEnvironment.read();
                 ioEnvironment.writeOutput(text);
                 return 0;
-            }
-            catch (IOException e) {
-                ioEnvironment.writeError("cat: error reading input stream");
+            } catch (IOException e) {
+                ioEnvironment.writeError("cat: error reading input stream" + System.lineSeparator());
                 return 1;
             }
         }
@@ -57,14 +56,14 @@ public class CatExecutor implements InternalCommandExecutor {
             try {
                 stringBuilder.append(Files.readString(filePath));
             } catch (IOException e) {
-                ioEnvironment.writeError("cat: cannot read file " + file);
+                ioEnvironment.writeError("cat: cannot read file " + file + System.lineSeparator());
                 return 1;
             }
         }
         try {
             ioEnvironment.writeOutput(stringBuilder.toString());
         } catch (IOException e) {
-            ioEnvironment.writeError("cat: cannot write data to output stream");
+            ioEnvironment.writeError("cat: cannot write data to output stream" + System.lineSeparator());
             return 1;
         }
         return 0;

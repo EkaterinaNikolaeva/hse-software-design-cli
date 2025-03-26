@@ -6,12 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cli.commandexecutor.commands.CatExecutor;
-import cli.commandexecutor.commands.EchoExecutor;
-import cli.commandexecutor.commands.ExitExecutor;
-import cli.commandexecutor.commands.InternalCommandExecutor;
-import cli.commandexecutor.commands.PwdExecutor;
-import cli.commandexecutor.commands.WcExecutor;
+import cli.commandexecutor.commands.*;
 import cli.environment.Environment;
 import cli.exceptions.ExitCommandException;
 import cli.ioenvironment.IOEnvironmentImpl;
@@ -38,6 +33,7 @@ public class CommandExecutorImpl implements CommandExecutor {
         builtInCommands.put("echo", new EchoExecutor());
         builtInCommands.put("wc", new WcExecutor());
         builtInCommands.put("exit", new ExitExecutor());
+        builtInCommands.put("=", new SetEnvironmentExecutor(environment));
     }
 
     private int executeBuiltIn(@NotNull Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
@@ -68,7 +64,7 @@ public class CommandExecutorImpl implements CommandExecutor {
             return process.waitFor();
         } catch (IOException | InterruptedException e) {
             try {
-                error.write(("Error executing external command: " + e.getMessage()).getBytes());
+                error.write(("Error executing external command: " + e.getMessage() + System.lineSeparator()).getBytes());
             } catch (IOException ee) {
 
             }

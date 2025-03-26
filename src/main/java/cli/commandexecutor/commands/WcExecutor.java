@@ -2,7 +2,6 @@ package cli.commandexecutor.commands;
 
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -41,7 +40,7 @@ public class WcExecutor implements InternalCommandExecutor {
         output.append(System.lineSeparator());
     }
 
-    private @NotNull int processInputStream(CommandOptions options, IOEnvironment ioEnvironment) {
+    private int processInputStream(CommandOptions options, IOEnvironment ioEnvironment) {
         StringBuilder output = new StringBuilder();
         int lines = 0;
         int words = 0;
@@ -50,7 +49,7 @@ public class WcExecutor implements InternalCommandExecutor {
         try {
             content = ioEnvironment.read();
         } catch (IOException e) {
-            ioEnvironment.writeError("wc: error reading input stream");
+            ioEnvironment.writeError("wc: error reading input stream" + System.lineSeparator());
             return 1;
         }
         try (Scanner scanner = new Scanner(content)) {
@@ -65,7 +64,7 @@ public class WcExecutor implements InternalCommandExecutor {
         try {
             ioEnvironment.writeOutput(output.toString());
         } catch (IOException e) {
-            ioEnvironment.writeError("wc: error writing output stream");
+            ioEnvironment.writeError("wc: error writing output stream" + System.lineSeparator());
             return 1;
         }
         return 0;
@@ -124,7 +123,7 @@ public class WcExecutor implements InternalCommandExecutor {
         try {
             ioEnvironment.writeOutput(output.toString());
         } catch (IOException e) {
-            ioEnvironment.writeError("wc: cannot write to output stream");
+            ioEnvironment.writeError("wc: cannot write to output stream" + System.lineSeparator());
         }
 
         return 0;

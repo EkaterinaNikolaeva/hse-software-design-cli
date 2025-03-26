@@ -66,7 +66,7 @@ class CatExecutorTest {
     void testExecuteWithNonExistentFile() {
         int result = catExecutor.execute(List.of("nonexistent.txt"), new CommandOptions(), ioEnvironment);
         assertEquals(1, result);
-        assertEquals("cat: cannot read file nonexistent.txt", errorStream.toString());
+        assertEquals("cat: cannot read file nonexistent.txt" + System.lineSeparator(), errorStream.toString());
     }
 
     @Test
