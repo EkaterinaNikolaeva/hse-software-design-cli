@@ -2,6 +2,7 @@ package cli.commandexecutor.commands;
 
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -21,7 +22,8 @@ public class WcExecutor implements InternalCommandExecutor {
     private static final String FLAG_WORDS = "w";
     private static final String FLAG_BYTES = "c";
 
-    private void printStatistics(CommandOptions options, @org.jetbrains.annotations.NotNull StringBuilder output, String file, int lines, int words, int bytes) {
+    private void printStatistics(CommandOptions options, @org.jetbrains.annotations.NotNull StringBuilder output,
+                                 String file, int lines, int words, int bytes) {
         if (options.isEmpty() || options.containsOption(FLAG_LINES)) {
             output.append(lines).append(" ");
         }
