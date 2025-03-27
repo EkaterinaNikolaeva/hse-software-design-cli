@@ -23,7 +23,7 @@ class ParserTest {
 
     @Test
     void testParseCommandWithOptions() {
-        String input = "command --option1=value1 --option2=value2";
+        String input = "command --option1=value1 --option2=value2 -o";
 
         ParsedInput parsedInput = parser.parse(input);
         List<Command> commands = parsedInput.commands();
@@ -33,6 +33,7 @@ class ParserTest {
         assertEquals("command", command.name());
         assertTrue(command.options().getAllOptionValues("option1").contains("value1"));
         assertTrue(command.options().getAllOptionValues("option2").contains("value2"));
+        assertTrue(command.options().containsOption("o"));
     }
 
     @Test
@@ -67,16 +68,19 @@ class ParserTest {
 
     @Test
     void testParseCommandWithVariableAssignment() {
-        String input = "command | var=123";
+        String input = "command | var=123 | cmd2";
 
         ParsedInput parsedInput = parser.parse(input);
         List<Command> commands = parsedInput.commands();
 
-        assertEquals(2, commands.size());
+        assertEquals(3, commands.size());
         Command command1 = commands.get(0);
         assertEquals("command", command1.name());
         assertEquals(0, command1.args().size());
-        assertEquals("var=123", commands.get(1).name());
+        assertEquals("=", commands.get(1).name());
+        assertEquals(List.of("var", "123"), commands.get(1).args());
+        assertEquals("cmd2", commands.get(2).name());
+
     }
 
     @Test
@@ -183,8 +187,9 @@ class ParserTest {
         assertEquals("/user/home arg2", String.join(" ", command.args()));
     }
 
+    @Test
     void testParseCommandWithGroupedSingleLetterFlags() {
-        String input = "command -abc value";
+        String input = "command -abc=value";
         ParsedInput parsedInput = parser.parse(input);
         List<Command> commands = parsedInput.commands();
 
@@ -200,8 +205,9 @@ class ParserTest {
         ;
     }
 
+    @Test
     void testParseCommandWithGroupedLongFlags() {
-        String input = "command --abc value";
+        String input = "command --abc=value";
 
         ParsedInput parsedInput = parser.parse(input);
         List<Command> commands = parsedInput.commands();
@@ -215,6 +221,31 @@ class ParserTest {
         assertEquals(command.options().getAllOptionValues("abc"), List.of("value"));
         ;
     }
+
+    @Test
+    void testParserOrder() {
+        String input1 = "echo -n arg";
+        String input2 = "echo arg -n";
+
+        ParsedInput parsedInput1 = parser.parse(input1);
+        List<Command> commands1 = parsedInput1.commands();
+
+        ParsedInput parsedInput2 = parser.parse(input2);
+        List<Command> commands2 = parsedInput2.commands();
+
+        assertEquals(1, commands1.size());
+        Command command = commands1.get(0);
+        assertEquals("echo", command.name());
+        assertEquals(List.of("arg"), command.args());
+        assertTrue(command.options().containsOption("n"));
+
+        assertEquals(1, commands2.size());
+        Command command2 = commands2.get(0);
+        assertEquals("echo", command2.name());
+        assertEquals(List.of("arg"), command2.args());
+        assertTrue(command2.options().containsOption("n"));
+
+     }
 }
 
 class MockEnvironment implements Environment {
