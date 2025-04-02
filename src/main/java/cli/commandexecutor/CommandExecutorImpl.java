@@ -34,6 +34,7 @@ public class CommandExecutorImpl implements CommandExecutor {
         builtInCommands.put("wc", new WcExecutor());
         builtInCommands.put("exit", new ExitExecutor());
         builtInCommands.put("=", new SetEnvironmentExecutor(environment));
+        builtInCommands.put("grep", new GrepExecutor());
     }
 
     private int executeBuiltIn(@NotNull Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
