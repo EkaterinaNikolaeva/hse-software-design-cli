@@ -2,6 +2,7 @@ package cli.commandexecutor.commands;
 
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,14 +18,26 @@ public class GrepExecutor implements InternalCommandExecutor {
             return 1;
         }
 
-        String patternStr = args.get(0);
-        String fileName = args.get(1);
+        String patternStr;
+        String fileName;
 
         try {
             boolean wholeWord = options.containsOption("w");
             boolean ignoreCase = options.containsOption("i");
             int afterContext = 0;
-            // TODO A option
+            if (options.containsOption("A")) {
+                try {
+                    afterContext = Integer.parseInt(args.get(0));
+                } catch (NumberFormatException e) {
+                    ioEnvironment.writeError("Invalid number for -A option");
+                    return 1;
+                }
+                patternStr = args.get(1);
+                fileName = args.get(2);
+            } else {
+                patternStr = args.get(0);
+                fileName = args.get(1);
+            }
 
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
             if (wholeWord) {
@@ -33,10 +46,19 @@ public class GrepExecutor implements InternalCommandExecutor {
             Pattern pattern = Pattern.compile(patternStr, flags);
 
             List<String> lines = Files.readAllLines(Path.of(fileName));
-            for (String line : lines) {
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i);
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
                     ioEnvironment.writeOutput(line + System.lineSeparator());
+
+                    if (afterContext > 0) {
+                        int end = Math.min(i + afterContext + 1, lines.size());
+                        for (int j = i + 1; j < end; j++) {
+                            ioEnvironment.writeOutput(lines.get(j) + System.lineSeparator());
+                        }
+                        i = end - 1;
+                    }
                 }
             }
 
