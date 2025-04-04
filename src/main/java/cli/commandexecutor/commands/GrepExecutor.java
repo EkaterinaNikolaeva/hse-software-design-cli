@@ -10,13 +10,25 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+/**
+ * The GrepExecutor class implements the InternalCommandExecutor interface
+ * and provides functionality similar to the Unix "grep" command.
+ * It searches for lines matching a specified pattern in a file.
+ */
 public class GrepExecutor implements InternalCommandExecutor {
+
+    /**
+     * Executes the "grep" command to search for patterns in a file.
+     * Supports options for whole-word matching, case-insensitive search,
+     * and displaying context lines after matches.
+     *
+     * @param args          Command arguments containing pattern, filename and optional number
+     * @param options       Command flags (options like -w, -i, -A)
+     * @param ioEnvironment input, output and error streams
+     * @return CommandResult containing the execution status (0 for success, 1 for error)
+     */
     @Override
     public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
-        if (args.size() < 2) {
-            ioEnvironment.writeError("Usage: grep [options] <pattern> <file>");
-            return 1;
-        }
 
         String patternStr;
         String fileName;
@@ -26,6 +38,10 @@ public class GrepExecutor implements InternalCommandExecutor {
             boolean ignoreCase = options.containsOption("i");
             int afterContext = 0;
             if (options.containsOption("A")) {
+                if (args.size() < 3) {
+                    ioEnvironment.writeError("Usage: grep [options] -A <number> <pattern> <file>");
+                    return 1;
+                }
                 try {
                     afterContext = Integer.parseInt(args.get(0));
                 } catch (NumberFormatException e) {
@@ -35,6 +51,10 @@ public class GrepExecutor implements InternalCommandExecutor {
                 patternStr = args.get(1);
                 fileName = args.get(2);
             } else {
+                if (args.size() < 2) {
+                    ioEnvironment.writeError("Usage: grep [options] <pattern> <file>");
+                    return 1;
+                }
                 patternStr = args.get(0);
                 fileName = args.get(1);
             }
