@@ -1,11 +1,9 @@
 package cli.commandexecutor.commands;
 
+import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
-import cli.model.CommandResult;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -25,31 +23,38 @@ public class EchoExecutor implements InternalCommandExecutor {
      * If the "--help" option is specified, it returns a help message.
      * If the "-n" option is specified, it does not write new line at the end of text.
      *
-     * @param args         Words to be written.
-     * @param options      Command flags.
-     * @param inputStream  Input stream for reading file when no words are specified.
-     * @param outputStream Output stream for writing the command result.
+     * @param args          Words to be written.
+     * @param options       Command flags.
+     * @param ioEnvironment input, output and error streams
      * @return CommandResult containing the execution status and output.
      */
     @Override
-    public CommandResult execute(List<String> args, CommandOptions options, InputStream inputStream, OutputStream outputStream) {
+    public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
         if (options != null && options.containsOption(FLAG_HELP)) {
             try {
-                outputStream.write(HELP_MESSAGE.getBytes());
+                ioEnvironment.writeOutput(HELP_MESSAGE);
             } catch (IOException e) {
-                return new CommandResult(1, "echo: cannot write data to output stream");
+                ioEnvironment.writeError("echo: cannot write data to output stream" + System.lineSeparator());
+                return 1;
             }
-            return new CommandResult(0, HELP_MESSAGE);
+            return 0;
         }
         String output = String.join(" ", args);
-        try {
-            outputStream.write((output + System.lineSeparator()).getBytes() );
-        } catch (IOException e) {
-            return new CommandResult(1, "echo: cannot write to output stream");
-        }
         if (options != null && options.containsOption(FLAG_NO_NEWLINE)) {
-            return new CommandResult(0, output);
+            try {
+                ioEnvironment.writeOutput(output);
+            } catch (IOException e) {
+                ioEnvironment.writeError("echo: cannot write to output stream" + System.lineSeparator());
+                return 1;
+            }
+            return 0;
         }
-        return new CommandResult(0, output + System.lineSeparator());
+        try {
+            ioEnvironment.writeOutput(output + System.lineSeparator());
+        } catch (IOException e) {
+            ioEnvironment.writeError("echo: cannot write to output stream" + System.lineSeparator());
+            return 1;
+        }
+        return 0;
     }
 }

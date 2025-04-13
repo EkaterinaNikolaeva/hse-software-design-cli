@@ -1,10 +1,8 @@
 package cli.commandexecutor.commands;
 
+import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
-import cli.model.CommandResult;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -13,5 +11,5 @@ import java.util.List;
  * and managing the input/output streams associated with it.
  */
 public interface InternalCommandExecutor {
-    CommandResult execute(List<String> args, CommandOptions options, InputStream inputStream, OutputStream outputStream);
+    int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment);
 }

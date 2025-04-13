@@ -51,15 +51,15 @@ public class PipelineExecutorImpl implements PipelineExecutor {
                 InputStream nextInput = !isLastCommand ? new PipedInputStream(pipedOutputStream) : null;
                 InputStream currentInput = input;
 
-                Future<CommandResult> future;
+                Future<Integer> future;
                 if (isLastCommand) {
                     future = executor.submit(() -> {
-                        return commandExecutor.execute(command, currentInput, currentOutput);
+                        return commandExecutor.execute(command, currentInput, currentOutput, System.err);
                     });
                 } else {
                     future = executor.submit(() -> {
                         try (OutputStream out = currentOutput) {
-                            return commandExecutor.execute(command, currentInput, out);
+                            return commandExecutor.execute(command, currentInput, out, System.err);
                         }
                     });
                 }

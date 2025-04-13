@@ -1,12 +1,10 @@
 package cli.commandexecutor;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import cli.exceptions.ExitCommandException;
 import cli.model.Command;
-import cli.model.CommandResult;
 
 /**
  * The CommandExecutor interface defines the contract for executing commands.
@@ -14,5 +12,5 @@ import cli.model.CommandResult;
  * handling input and output streams, and returning the result of the execution.
  */
 public interface CommandExecutor {
-    CommandResult execute(Command command, InputStream input, OutputStream output) throws ExitCommandException, IOException;
+    int execute(Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException;
 }
