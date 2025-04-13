@@ -29,7 +29,7 @@ public class PwdExecutor implements InternalCommandExecutor {
     @Override
     public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
         if (!args.isEmpty()) {
-            ioEnvironment.writeError("pwd does not have args");
+            ioEnvironment.writeError("pwd does not have args" + System.lineSeparator());
             return 1;
         }
         if (options != null && options.containsOption(FLAG_HELP_MESSAGE)) {
