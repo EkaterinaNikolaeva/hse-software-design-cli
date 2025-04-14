@@ -61,7 +61,8 @@ public class GrepExecutor implements InternalCommandExecutor {
 
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
             if (wholeWord) {
-                patternStr = "\\b" + patternStr + "\\b";
+                String escapedPattern = Pattern.quote(patternStr);
+                patternStr = "(?<=\\W|^)" + escapedPattern + "(?=\\W|$)";
             }
             Pattern pattern = Pattern.compile(patternStr, flags);
 

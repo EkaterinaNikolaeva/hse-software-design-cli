@@ -68,7 +68,7 @@ class GrepExecutorTest {
 
     @Test
     void testWholeWordMatching() throws IOException {
-        String content = "hello\nhello world\nhelloworld";
+        String content = "hello\n hello \nhello \n hello world\nhello world\nworld hello\n world hello \nhelloworld\nworldhello";
         Files.writeString(testFile, content, StandardOpenOption.WRITE);
 
         Map<String, List<String>> options = new HashMap<>();
@@ -81,7 +81,7 @@ class GrepExecutorTest {
         );
 
         assertEquals(0, result);
-        assertEquals("hello\nhello world\n", outputStream.toString());
+        assertEquals("hello\n hello \nhello \n hello world\nhello world\nworld hello\n world hello \n", outputStream.toString());
     }
 
     @Test
