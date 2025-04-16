@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import cli.model.Token;
+import cli.exceptions.*;
+import cli.exceptions.ParseException.EmptyPipeException;
 
 class TokenizerTest {
 
@@ -79,12 +81,12 @@ class TokenizerTest {
 
         @Test
         void testEmptyInput() {
-                assertEquals(List.of(), tokenizer.tokenize(""));
+                assertThrows(EmptyPipeException.class, () -> tokenizer.tokenize(""));
         }
 
         @Test
         void testOnlySpaces() {
-                assertEquals(List.of(), tokenizer.tokenize("    "));
+                assertThrows(EmptyPipeException.class, () -> tokenizer.tokenize("    "));
         }
 
         @Test
@@ -137,7 +139,7 @@ class TokenizerTest {
         void testEscapedSpaceWithQuotes() {
                 String input = "echo \"Hello\\ World\"";
                 assertEquals(
-                                List.of(List.of(new Token("echo"), new Token("Hello World"))),
+                                List.of(List.of(new Token("echo"), new Token("Hello\\ World"))),
                                 tokenizer.tokenize(input));
         }
 
@@ -184,7 +186,7 @@ class TokenizerTest {
         @Test
         void testEscapedPipeInsideQuotes() {
                 assertEquals(
-                                List.of(List.of(new Token("echo"), new Token("This | is inside"))),
+                                List.of(List.of(new Token("echo"), new Token("This \\| is inside"))),
                                 tokenizer.tokenize("echo \"This \\| is inside\""));
         }
 

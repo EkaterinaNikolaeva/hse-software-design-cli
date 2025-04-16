@@ -122,12 +122,13 @@ public class ParserImpl implements Parser {
         StringBuilder varName = new StringBuilder();
 
         boolean inVar = false;
+        char prev = '.';
 
         if (token.substitute()) {
             for (int i = 0; i < arg.length(); i++) {
                 char c = arg.charAt(i);
 
-                if (c == '$' && !inVar) {
+                if (c == '$' && !inVar && prev != '\\') {
                     inVar = true;
                     varName.setLength(0);
                 } else if (inVar && (Character.isLetterOrDigit(c) || c == '_')) {
@@ -138,13 +139,17 @@ public class ParserImpl implements Parser {
                                 env.getVariable(varName.toString()) != null ? env.getVariable(varName.toString()) : "");
                         inVar = false;
                     }
-                    if (c == '$') {
+                    if (c == '$' && prev != '\\') {
                         inVar = true;
                         varName.setLength(0);
                     } else {
+                        if (c == '$' && prev == '\\') {
+                            expanded.deleteCharAt(expanded.length() - 1);
+                        }
                         expanded.append(c);
                     }
                 }
+                prev = c;
             }
             if (inVar) {
                 expanded.append(env.getVariable(varName.toString()) != null ? env.getVariable(varName.toString()) : "");

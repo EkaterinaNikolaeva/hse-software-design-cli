@@ -1,9 +1,14 @@
 package cli.parser;
 
 import java.util.ArrayList;
+import java.util.EmptyStackException;
 import java.util.List;
+import java.util.Set;
 
 import cli.model.Token;
+import cli.exceptions.ParseException;
+import cli.exceptions.ParseException.EmptyPipeException;
+import cli.exceptions.ParseException.UnclosedQuoteException;
 
 /**
  * The TokenizerImpl class is responsible for tokenizing the input string into
@@ -27,41 +32,53 @@ public class TokenizerImpl implements Tokenizer {
         List<List<Token>> commands = new ArrayList<>();
         List<Token> currentCommand = new ArrayList<>();
         StringBuilder token = new StringBuilder();
+        final Set<Character> dqEscapes = Set.of('$', '`', '"', '\\', '\n');
 
         boolean inSingleQuotes = false;
         boolean inDoubleQuotes = false;
-        boolean escaping = false;
-        boolean substitute = true;
+        boolean isEscaping = false;
+        boolean isSubstitute = true;
 
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
 
-            if (escaping) {
+            if (isEscaping && !inDoubleQuotes) {
                 token.append(c);
-                escaping = false;
+                isEscaping = false;
+
+            } else if (isEscaping && inDoubleQuotes) {
+                if (!dqEscapes.contains(c) || c == '$') {
+                    token.append('\\');
+                }
+
+                isEscaping = false;
+                token.append(c);
 
             } else if (c == '\\') {
                 if (inDoubleQuotes || isSpecialChar(peek(input, i + 1)) && !inSingleQuotes) {
-                    escaping = true;
+                    isEscaping = true;
                 } else {
                     token.append(c);
                 }
             } else if (c == '\'' && !inDoubleQuotes) {
                 inSingleQuotes = !inSingleQuotes;
-                substitute = false;
+                isSubstitute = false;
 
             } else if (c == '"' && !inSingleQuotes) {
                 inDoubleQuotes = !inDoubleQuotes;
-                substitute = true;
+                isSubstitute = true;
 
             } else if (c == '|' && !inSingleQuotes && !inDoubleQuotes) {
                 addToken(currentCommand, token, inSingleQuotes);
+                if (currentCommand.isEmpty()) {
+                    throw new EmptyPipeException();
+                }
                 commands.add(currentCommand);
                 currentCommand = new ArrayList<>();
-                substitute = true;
+                isSubstitute = true;
 
             } else if (Character.isWhitespace(c) && !inSingleQuotes && !inDoubleQuotes) {
-                addToken(currentCommand, token, substitute);
+                addToken(currentCommand, token, isSubstitute);
 
             } else {
                 if (inSingleQuotes) {
@@ -72,9 +89,14 @@ public class TokenizerImpl implements Tokenizer {
             }
         }
 
-        addToken(currentCommand, token, substitute);
-        if (!currentCommand.isEmpty()) {
-            commands.add(currentCommand);
+        addToken(currentCommand, token, isSubstitute);
+        if (currentCommand.isEmpty()) {
+            throw new EmptyPipeException();
+        }
+        commands.add(currentCommand);
+
+        if (inSingleQuotes || inDoubleQuotes) {
+            throw new UnclosedQuoteException();
         }
 
         return commands;
