@@ -126,7 +126,7 @@ class GrepExecutorTest {
         );
 
         assertEquals(1, result);
-        assertTrue(errorStream.toString().contains("Error reading file"));
+        assertTrue(errorStream.toString().contains("grep: error reading file"));
     }
 
     @Test
@@ -138,7 +138,7 @@ class GrepExecutorTest {
         );
 
         assertEquals(1, result);
-        assertEquals("Usage: grep [options] <pattern> <file>", errorStream.toString().trim());
+        assertEquals("grep: invalid number of arguments" + System.lineSeparator() + "grep [options] <pattern> <file>", errorStream.toString().trim());
     }
 
     @Test
