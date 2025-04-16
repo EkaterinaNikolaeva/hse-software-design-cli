@@ -126,7 +126,7 @@ class GrepExecutorTest {
         );
 
         assertEquals(1, result);
-        assertTrue(errorStream.toString().contains("grep: error reading file"));
+        assertTrue(errorStream.toString().contains("grep: " + "nonexistent.txt" + ": No such file or directory"));
     }
 
     @Test
@@ -138,7 +138,7 @@ class GrepExecutorTest {
         );
 
         assertEquals(1, result);
-        assertEquals("grep: invalid number of arguments" + System.lineSeparator() + "grep [options] <pattern> <file>", errorStream.toString().trim());
+        assertTrue(errorStream.toString().contains("grep: invalid number of arguments or empty input stream"));
     }
 
     @Test
@@ -170,5 +170,128 @@ class GrepExecutorTest {
 
         assertEquals(0, result);
         assertEquals("hello hello hello\nhello world hello\n", outputStream.toString());
+    }
+
+    @Test
+    void testInputFromStdinBasic() {
+        // Настраиваем ioEnvironment с mock-вводом
+        String input = "line1\nline2\nmatch\nline3\n";
+        ioEnvironment = new IOEnvironmentImpl(
+                new java.io.ByteArrayInputStream(input.getBytes()),
+                outputStream,
+                errorStream
+        );
+
+        int result = grepExecutor.execute(
+                List.of("match"),
+                new CommandOptions(),
+                ioEnvironment
+        );
+
+        assertEquals(0, result);
+        assertEquals("match\n", outputStream.toString());
+    }
+
+    @Test
+    void testInputFromStdinWithOptions() {
+        String input = "Line1\nLINE2\nline3\nMATCH\nmatch\n";
+        ioEnvironment = new IOEnvironmentImpl(
+                new java.io.ByteArrayInputStream(input.getBytes()),
+                outputStream,
+                errorStream
+        );
+
+        Map<String, List<String>> options = new HashMap<>();
+        options.put("i", null); // case-insensitive
+
+        int result = grepExecutor.execute(
+                List.of("match"),
+                new CommandOptions(options),
+                ioEnvironment
+        );
+
+        assertEquals(0, result);
+        assertEquals("MATCH\nmatch\n", outputStream.toString());
+    }
+
+    @Test
+    void testInputFromStdinWithAfterContext() {
+        String input = "line1\nmatch1\nline2\nline3\nmatch2\nline4\n";
+        ioEnvironment = new IOEnvironmentImpl(
+                new java.io.ByteArrayInputStream(input.getBytes()),
+                outputStream,
+                errorStream
+        );
+
+        Map<String, List<String>> options = new HashMap<>();
+        options.put("A", null);
+
+        int result = grepExecutor.execute(
+                List.of("1", "match"),
+                new CommandOptions(options),
+                ioEnvironment
+        );
+
+        assertEquals(0, result);
+        assertEquals("match1\nline2\nmatch2\nline4\n", outputStream.toString());
+    }
+
+    @Test
+    void testFileInputIgnoredWhenStdinPresent() throws IOException {
+        String fileContent = "file content\nshould be ignored\n";
+        Files.writeString(testFile, fileContent, StandardOpenOption.WRITE);
+
+        String input = "stdin content\nshould be processed\n";
+        ioEnvironment = new IOEnvironmentImpl(
+                new java.io.ByteArrayInputStream(input.getBytes()),
+                outputStream,
+                errorStream
+        );
+
+        int result = grepExecutor.execute(
+                List.of("should", testFile.toString()),
+                new CommandOptions(),
+                ioEnvironment
+        );
+
+        assertEquals(0, result);
+        assertTrue(errorStream.toString().contains("grep: warning: file "));
+        assertEquals("should be processed\n", outputStream.toString());
+    }
+
+    @Test
+    void testEmptyInput() {
+        ioEnvironment = new IOEnvironmentImpl(
+                new java.io.ByteArrayInputStream("".getBytes()),
+                outputStream,
+                errorStream
+        );
+
+        int result = grepExecutor.execute(
+                List.of("pattern"),
+                new CommandOptions(),
+                ioEnvironment
+        );
+        assertEquals(1, result);
+        assertTrue(errorStream.toString().contains("grep: invalid number of arguments or empty input stream"));
+    }
+
+    @Test
+    void testMultiplePatternsInInput() {
+        String input = "first\nsecond\nthird\nfirst again\n";
+        ioEnvironment = new IOEnvironmentImpl(
+                new java.io.ByteArrayInputStream(input.getBytes()),
+                outputStream,
+                errorStream
+        );
+
+        int result = grepExecutor.execute(
+                List.of("first"),
+                new CommandOptions(),
+                ioEnvironment
+        );
+
+        assertEquals(0, result);
+        assertEquals("first\nfirst again\n", outputStream.toString());
     }
 }

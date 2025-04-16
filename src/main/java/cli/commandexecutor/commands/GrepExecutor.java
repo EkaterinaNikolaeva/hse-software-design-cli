@@ -6,6 +6,7 @@ import cli.model.CommandOptions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -13,12 +14,12 @@ import java.util.regex.Matcher;
 /**
  * The GrepExecutor class implements the InternalCommandExecutor interface
  * and provides functionality similar to the Unix "grep" command.
- * It searches for lines matching a specified pattern in a file.
+ * It searches for lines matching a specified pattern in a file or input stream.
  */
 public class GrepExecutor implements InternalCommandExecutor {
 
     /**
-     * Executes the "grep" command to search for patterns in a file.
+     * Executes the "grep" command to search for patterns in a file or input stream.
      * Supports options for whole-word matching, case-insensitive search,
      * and displaying context lines after matches.
      *
@@ -29,34 +30,53 @@ public class GrepExecutor implements InternalCommandExecutor {
      */
     @Override
     public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
-
         String patternStr;
-        String fileName;
+        String fileName = null;
+        boolean useFile = false;
 
         try {
             boolean wholeWord = options.containsOption("w");
             boolean ignoreCase = options.containsOption("i");
             int afterContext = 0;
+
             if (options.containsOption("A")) {
-                if (args.size() < 3) {
-                    ioEnvironment.writeError("grep: invalid number of arguments" + System.lineSeparator() + "grep [options] -A <number> <pattern> <file>" + System.lineSeparator());
+                if (args.size() < (ioEnvironment.hasInput() ? 2 : 3)) {
+                    ioEnvironment.writeError("grep: invalid number of arguments or empty input stream" + System.lineSeparator() +
+                            "grep [options] -A <number> <pattern> [file]" + System.lineSeparator());
                     return 1;
                 }
                 try {
                     afterContext = Integer.parseInt(args.get(0));
+                    patternStr = args.get(1);
+                    if (args.size() > 2) {
+                        fileName = args.get(2);
+                        useFile = true;
+                    }
                 } catch (NumberFormatException e) {
                     ioEnvironment.writeError("grep: Invalid number for -A option" + System.lineSeparator());
                     return 1;
                 }
-                patternStr = args.get(1);
-                fileName = args.get(2);
             } else {
-                if (args.size() < 2) {
-                    ioEnvironment.writeError("grep: invalid number of arguments" + System.lineSeparator() + "grep [options] <pattern> <file>" + System.lineSeparator());
+                if (args.size() < (ioEnvironment.hasInput() ? 1 : 2)) {
+                    ioEnvironment.writeError("grep: invalid number of arguments or empty input stream" + System.lineSeparator() +
+                            "grep [options] <pattern> [file]" + System.lineSeparator());
                     return 1;
                 }
                 patternStr = args.get(0);
-                fileName = args.get(1);
+                if (args.size() > 1) {
+                    fileName = args.get(1);
+                    useFile = true;
+                }
+            }
+
+            if (useFile && ioEnvironment.hasInput()) {
+                ioEnvironment.writeError("grep: warning: file '" + fileName + "' ignored (reading from input stream)" + System.lineSeparator());
+                useFile = false;
+            }
+
+            if (useFile && !Files.exists(Path.of(fileName))) {
+                ioEnvironment.writeError("grep: " + fileName + ": No such file or directory" + System.lineSeparator());
+                return 1;
             }
 
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
@@ -66,7 +86,17 @@ public class GrepExecutor implements InternalCommandExecutor {
             }
             Pattern pattern = Pattern.compile(patternStr, flags);
 
-            List<String> lines = Files.readAllLines(Path.of(fileName));
+            List<String> lines;
+            if (useFile) {
+                lines = Files.readAllLines(Path.of(fileName));
+            } else {
+                lines = new ArrayList<>();
+                String line;
+                while ((line = ioEnvironment.readLine()) != null) {
+                    lines.add(line);
+                }
+            }
+
             for (int i = 0; i < lines.size(); i++) {
                 String line = lines.get(i);
                 Matcher matcher = pattern.matcher(line);
@@ -85,10 +115,7 @@ public class GrepExecutor implements InternalCommandExecutor {
 
             return 0;
         } catch (IOException e) {
-            ioEnvironment.writeError("grep: error reading file " + e.getMessage() + System.lineSeparator());
-            return 1;
-        } catch (Exception e) {
-            ioEnvironment.writeError("grep: error " + e.getMessage() + System.lineSeparator());
+            ioEnvironment.writeError("grep: " + e.getMessage() + System.lineSeparator());
             return 1;
         }
     }

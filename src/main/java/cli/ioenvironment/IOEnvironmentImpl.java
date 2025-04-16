@@ -2,9 +2,7 @@ package cli.ioenvironment;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 public class IOEnvironmentImpl implements IOEnvironment {
     private final InputStream inputStream;
@@ -19,7 +17,8 @@ public class IOEnvironmentImpl implements IOEnvironment {
     @Override
     public void writeError(@NotNull String error) {
         try {
-            this.errorStream.write(error.getBytes());
+            errorStream.write(error.getBytes());
+            errorStream.flush();
         } catch (IOException e) {
 
         }
@@ -28,7 +27,8 @@ public class IOEnvironmentImpl implements IOEnvironment {
 
     @Override
     public void writeOutput(@NotNull String output) throws IOException {
-        this.outputStream.write(output.getBytes());
+        outputStream.write(output.getBytes());
+        outputStream.flush();
     }
 
     @Override
@@ -39,5 +39,26 @@ public class IOEnvironmentImpl implements IOEnvironment {
             sb.append((char) c);
         }
         return sb.toString();
+    }
+
+    @Override
+    public String readLine() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int c;
+        while ((c = inputStream.read()) != -1) {
+            if (c == '\n') {
+                break;
+            }
+            sb.append((char) c);
+        }
+        if (c == -1 && sb.isEmpty()) {
+            return null;
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public boolean hasInput() throws IOException {
+        return inputStream.available() > 0;
     }
 }
