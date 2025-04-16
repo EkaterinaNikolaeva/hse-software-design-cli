@@ -83,6 +83,11 @@ hello world>
 ...
 ```
 
+```
+> echo "hello, world!" | cat
+hello, world!
+```
+
 ## WC
 
 Выведет количество новых строк, слов и байт в файлах.
