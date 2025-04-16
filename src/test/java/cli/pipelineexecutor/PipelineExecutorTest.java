@@ -16,11 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PipelineExecutorTest {
     private PipelineExecutor pipelineExecutor;
     private MockCommandExecutor commandExecutor;
+    private ByteArrayOutputStream errorOutput;
 
     @BeforeEach
     void setUp() {
         commandExecutor = new MockCommandExecutor();
         pipelineExecutor = new PipelineExecutorImpl(commandExecutor);
+        errorOutput = new ByteArrayOutputStream();
     }
 
     @Test
@@ -30,9 +32,10 @@ public class PipelineExecutorTest {
         ));
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output);
+        pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
 
         assertEquals("hello world", output.toString().trim());
+        assertTrue(errorOutput.toString().isEmpty());
     }
 
     @Test
@@ -43,9 +46,10 @@ public class PipelineExecutorTest {
         ));
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output);
+        pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
 
         assertEquals("hello world", output.toString().trim());
+        assertTrue(errorOutput.toString().isEmpty());
     }
 
     @Test
@@ -56,8 +60,9 @@ public class PipelineExecutorTest {
         ));
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output);
+        pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
         assertEquals("hello world", output.toString().trim());
+        assertTrue(errorOutput.toString().isEmpty());
     }
 
     @Test
@@ -67,17 +72,19 @@ public class PipelineExecutorTest {
         ));
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        pipelineExecutor.execute(input1, new ByteArrayInputStream(new byte[0]), output);
+        pipelineExecutor.execute(input1, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
 
         assertEquals("hello", output.toString().trim());
+        assertTrue(errorOutput.toString().isEmpty());
 
         ParsedInput input2 = new ParsedInput(List.of(
                 new Command("write_arg", List.of(" world"), new CommandOptions())
         ));
 
-        pipelineExecutor.execute(input2, new ByteArrayInputStream(new byte[0]), output);
+        pipelineExecutor.execute(input2, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
 
         assertEquals("hello world", output.toString().trim());
+        assertTrue(errorOutput.toString().isEmpty());
     }
 
     @Test
@@ -90,7 +97,7 @@ public class PipelineExecutorTest {
 
 
         try {
-            pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output);
+            pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
             fail("Expected an exception to be thrown");
         } catch (Exception e) {
             if (!(e instanceof ExitCommandException) && !(e.getCause() instanceof ExitCommandException)) {
@@ -99,6 +106,7 @@ public class PipelineExecutorTest {
         }
 
         assertTrue(commandExecutor.isExitCalled());
+        assertTrue(errorOutput.toString().isEmpty());
     }
 }
 
