@@ -3,6 +3,8 @@ package cli;
 import cli.commandexecutor.CommandExecutorImpl;
 import cli.environment.EnvironmentImpl;
 import cli.exceptions.ExitCommandException;
+import cli.exceptions.ParseException;
+import cli.exceptions.TerminalErrorException;
 import cli.model.ParsedInput;
 import cli.parser.ParserImpl;
 import cli.pipelineexecutor.PipelineExecutorImpl;
@@ -32,13 +34,17 @@ public class Main {
 
             try {
                 ParsedInput parsedInput = parser.parse(input);
-                pipelineExecutor.execute(parsedInput, System.in, System.out);
+                pipelineExecutor.execute(parsedInput, System.in, System.out, System.out);
             } catch (Exception e) {
                 if (e.getCause() instanceof ExitCommandException) {
                     return;
-                } else {
-                    System.err.println("Error: " + e.getMessage());
+                } else if (e instanceof TerminalErrorException) {
+                    continue;
+                } else if (e instanceof ParseException){
+                    System.err.println(e.getMessage());
+                    continue;
                 }
+                throw e;
             }
         }
     }
