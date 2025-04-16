@@ -1,5 +1,6 @@
 package cli.pipelineexecutor;
 
+import cli.exceptions.TerminalErrorException;
 import cli.model.*;
 import cli.commandexecutor.CommandExecutor;
 
@@ -34,7 +35,7 @@ public class PipelineExecutorImpl implements PipelineExecutor {
      * @throws Exception If any error occurs during pipeline execution.
      */
     @Override
-    public void execute(ParsedInput parsedInput, InputStream firstInput, OutputStream lastOutput) throws Exception {
+    public void execute(ParsedInput parsedInput, InputStream firstInput, OutputStream lastOutput, OutputStream errorStream) throws Exception {
         List<Command> commands = parsedInput.commands();
         if (commands.isEmpty()) {
             return;
@@ -54,17 +55,18 @@ public class PipelineExecutorImpl implements PipelineExecutor {
                 Future<Integer> future;
                 if (isLastCommand) {
                     future = executor.submit(() -> {
-                        return commandExecutor.execute(command, currentInput, currentOutput, System.err);
+                        return commandExecutor.execute(command, currentInput, currentOutput, errorStream);
                     });
                 } else {
                     future = executor.submit(() -> {
                         try (OutputStream out = currentOutput) {
-                            return commandExecutor.execute(command, currentInput, out, System.err);
+                            return commandExecutor.execute(command, currentInput, out, errorStream);
                         }
                     });
                 }
-                future.get();
-
+                if (future.get()!=0){
+                    throw new TerminalErrorException();
+                }
                 if (!isLastCommand) {
                     input = nextInput;
                 }

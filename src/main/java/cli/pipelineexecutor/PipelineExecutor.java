@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import cli.exceptions.ExitCommandException;
+import cli.exceptions.TerminalErrorException;
 import cli.model.ParsedInput;
 
 /**
@@ -21,8 +22,10 @@ public interface PipelineExecutor {
      * @param parsedInput The parsed input representing the pipeline of commands.
      * @param input       The initial input stream for the pipeline.
      * @param output      The final output stream for the pipeline.
+     * @param errorStream The error stream for command error output.
      * @throws Exception            If any error occurs during pipeline execution.
      * @throws ExitCommandException If exit command was provided.
+     * @throws TerminalErrorException If error is pipeline-terminal.
      */
-    void execute(ParsedInput parsedInput, InputStream input, OutputStream output) throws Exception;
+    void execute(ParsedInput parsedInput, InputStream input, OutputStream output, OutputStream errorStream) throws Exception;
 }
