@@ -39,20 +39,20 @@ public class GrepExecutor implements InternalCommandExecutor {
             int afterContext = 0;
             if (options.containsOption("A")) {
                 if (args.size() < 3) {
-                    ioEnvironment.writeError("Usage: grep [options] -A <number> <pattern> <file>");
+                    ioEnvironment.writeError("grep: invalid number of arguments" + System.lineSeparator() + "grep [options] -A <number> <pattern> <file>" + System.lineSeparator());
                     return 1;
                 }
                 try {
                     afterContext = Integer.parseInt(args.get(0));
                 } catch (NumberFormatException e) {
-                    ioEnvironment.writeError("Invalid number for -A option");
+                    ioEnvironment.writeError("grep: Invalid number for -A option" + System.lineSeparator());
                     return 1;
                 }
                 patternStr = args.get(1);
                 fileName = args.get(2);
             } else {
                 if (args.size() < 2) {
-                    ioEnvironment.writeError("Usage: grep [options] <pattern> <file>");
+                    ioEnvironment.writeError("grep: invalid number of arguments" + System.lineSeparator() + "grep [options] <pattern> <file>" + System.lineSeparator());
                     return 1;
                 }
                 patternStr = args.get(0);
@@ -85,10 +85,10 @@ public class GrepExecutor implements InternalCommandExecutor {
 
             return 0;
         } catch (IOException e) {
-            ioEnvironment.writeError("Error reading file: " + e.getMessage());
+            ioEnvironment.writeError("grep: error reading file " + e.getMessage() + System.lineSeparator());
             return 1;
         } catch (Exception e) {
-            ioEnvironment.writeError("Error: " + e.getMessage());
+            ioEnvironment.writeError("grep: error " + e.getMessage() + System.lineSeparator());
             return 1;
         }
     }
