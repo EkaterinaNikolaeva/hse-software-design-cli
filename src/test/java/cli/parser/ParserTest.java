@@ -1,6 +1,7 @@
 package cli.parser;
 
 import cli.environment.Environment;
+import cli.exceptions.ParseException.EmptyPipeException;
 import cli.model.Command;
 import cli.model.ParsedInput;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,10 +106,7 @@ class ParserTest {
     void testParseCommandWithEmptyInput() {
         String input = "";
 
-        ParsedInput parsedInput = parser.parse(input);
-        List<Command> commands = parsedInput.commands();
-
-        assertEquals(0, commands.size());
+        assertThrows(EmptyPipeException.class, () -> parser.parse(input));
     }
 
     @Test

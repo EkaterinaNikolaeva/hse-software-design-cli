@@ -21,7 +21,6 @@ public class Main {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         PrintWriter writer = new PrintWriter(System.out); // Added semicolon here
 
-
         while (true) {
             writer.print("> ");
             writer.flush();
@@ -38,7 +37,7 @@ public class Main {
                 if (e.getCause() instanceof ExitCommandException) {
                     return;
                 } else {
-                    throw e;
+                    System.err.println("Error: " + e.getMessage());
                 }
             }
         }
