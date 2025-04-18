@@ -18,21 +18,35 @@ import java.util.regex.Matcher;
  */
 public class GrepExecutor implements InternalCommandExecutor {
 
+    // ANSI color codes
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_RED = "\u001B[31m";
+
     /**
-     * Executes the "grep" command to search for patterns in a file or input stream.
-     * Supports options for whole-word matching, case-insensitive search,
-     * and displaying context lines after matches.
+     * Highlights all matches of the pattern in the line with red color
      *
-     * @param args          Command arguments containing pattern, filename and optional number
-     * @param options       Command flags (options like -w, -i, -A)
-     * @param ioEnvironment input, output and error streams
-     * @return CommandResult containing the execution status (0 for success, 1 for error)
+     * @param line   the input line
+     * @param pattern the compiled pattern to match
+     * @return the line with highlighted matches
      */
+    private String highlightMatches(String line, Pattern pattern) {
+        Matcher matcher = pattern.matcher(line);
+        StringBuilder coloredLine = new StringBuilder();
+
+        while (matcher.find()) {
+            matcher.appendReplacement(coloredLine, ANSI_RED + matcher.group() + ANSI_RESET);
+        }
+        matcher.appendTail(coloredLine);
+
+        return coloredLine.toString();
+    }
+
     @Override
     public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
         String patternStr;
         String fileName = null;
         boolean useFile = false;
+        boolean colorOutput = options.containsOption("c") || options.containsOption("color");
 
         try {
             boolean wholeWord = options.containsOption("w");
@@ -97,18 +111,26 @@ public class GrepExecutor implements InternalCommandExecutor {
                 }
             }
 
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i);
+            for (int i = 0; i < lines.size();) {
+                String line = lines.get(i++);
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
-                    ioEnvironment.writeOutput(line + System.lineSeparator());
+                    String outputLine = colorOutput ? highlightMatches(line, pattern) : line;
+                    ioEnvironment.writeOutput(outputLine + System.lineSeparator());
 
                     if (afterContext > 0) {
-                        int end = Math.min(i + afterContext + 1, lines.size());
-                        for (int j = i + 1; j < end; j++) {
-                            ioEnvironment.writeOutput(lines.get(j) + System.lineSeparator());
+                        int end = Math.min(i + afterContext, lines.size());
+                        while (i < end) {
+                            line = lines.get(i++);
+                            matcher = pattern.matcher(line);
+                            if (matcher.find()) {
+                                outputLine = colorOutput ? highlightMatches(line, pattern) : line;
+                                ioEnvironment.writeOutput(outputLine + System.lineSeparator());
+                                end = Math.min(i + afterContext, lines.size());
+                            } else {
+                                ioEnvironment.writeOutput(line + System.lineSeparator());
+                            }
                         }
-                        i = end - 1;
                     }
                 }
             }
