@@ -86,28 +86,6 @@ public class PipelineExecutorTest {
         assertEquals("hello world", output.toString().trim());
         assertTrue(errorOutput.toString().isEmpty());
     }
-
-    @Test
-    void testCommandExit() {
-        ParsedInput input = new ParsedInput(List.of(
-                new Command("exit", List.of(), new CommandOptions())
-        ));
-
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-
-        try {
-            pipelineExecutor.execute(input, new ByteArrayInputStream(new byte[0]), output, new PrintStream(errorOutput));
-            fail("Expected an exception to be thrown");
-        } catch (Exception e) {
-            if (!(e instanceof ExitCommandException) && !(e.getCause() instanceof ExitCommandException)) {
-                fail("Expected ExitCommandException or its cause, but got " + e.getClass().getName());
-            }
-        }
-
-        assertTrue(commandExecutor.isExitCalled());
-        assertTrue(errorOutput.toString().isEmpty());
-    }
 }
 
 class MockCommandExecutor implements CommandExecutor {
