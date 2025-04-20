@@ -7,5 +7,4 @@ public interface IOEnvironment {
     void writeOutput(String output) throws IOException;
     String read() throws IOException;
     String readLine() throws IOException;
-    boolean hasInput() throws IOException;
 }

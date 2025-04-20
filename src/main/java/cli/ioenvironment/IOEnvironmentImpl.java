@@ -56,9 +56,4 @@ public class IOEnvironmentImpl implements IOEnvironment {
         }
         return sb.toString();
     }
-
-    @Override
-    public boolean hasInput() throws IOException {
-        return inputStream.available() > 0;
-    }
 }
