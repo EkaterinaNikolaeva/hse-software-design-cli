@@ -54,7 +54,7 @@ public class GrepExecutor implements InternalCommandExecutor {
             int afterContext = 0;
 
             if (options.containsOption("A")) {
-                if (args.size() < (ioEnvironment.hasInput() ? 2 : 3)) {
+                if (args.size() < 2) {
                     ioEnvironment.writeError("grep: invalid number of arguments or empty input stream" + System.lineSeparator() +
                             "grep [options] -A <number> <pattern> [file]" + System.lineSeparator());
                     return 1;
@@ -71,7 +71,7 @@ public class GrepExecutor implements InternalCommandExecutor {
                     return 1;
                 }
             } else {
-                if (args.size() < (ioEnvironment.hasInput() ? 1 : 2)) {
+                if (args.size() < 1) {
                     ioEnvironment.writeError("grep: invalid number of arguments or empty input stream" + System.lineSeparator() +
                             "grep [options] <pattern> [file]" + System.lineSeparator());
                     return 1;
@@ -83,20 +83,16 @@ public class GrepExecutor implements InternalCommandExecutor {
                 }
             }
 
-            if (useFile && ioEnvironment.hasInput()) {
-                ioEnvironment.writeError("grep: warning: file '" + fileName + "' ignored (reading from input stream)" + System.lineSeparator());
-                useFile = false;
-            }
-
             if (useFile && !Files.exists(Path.of(fileName))) {
                 ioEnvironment.writeError("grep: " + fileName + ": No such file or directory" + System.lineSeparator());
                 return 1;
             }
 
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
+            flags |= Pattern.UNICODE_CHARACTER_CLASS;
             if (wholeWord) {
                 String escapedPattern = Pattern.quote(patternStr);
-                patternStr = "(?<=\\W|^)" + escapedPattern + "(?=\\W|$)";
+                patternStr = "(?<=\\b|^)" + escapedPattern + "(?=\\b|$)";
             }
             Pattern pattern = Pattern.compile(patternStr, flags);
 

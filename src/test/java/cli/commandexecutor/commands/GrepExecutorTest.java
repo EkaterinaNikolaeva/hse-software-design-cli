@@ -132,7 +132,7 @@ class GrepExecutorTest {
     @Test
     void testInsufficientArguments() {
         int result = grepExecutor.execute(
-                List.of("single_argument"),
+                List.of(),
                 new CommandOptions(),
                 ioEnvironment
         );
@@ -237,11 +237,11 @@ class GrepExecutorTest {
     }
 
     @Test
-    void testFileInputIgnoredWhenStdinPresent() throws IOException {
-        String fileContent = "file content\nshould be ignored\n";
+    void testStdinPresentIgnoredWhenFileInput() throws IOException {
+        String fileContent = "file content\nshould be processed\n";
         Files.writeString(testFile, fileContent, StandardOpenOption.WRITE);
 
-        String input = "stdin content\nshould be processed\n";
+        String input = "stdin content\nshould be ignored\n";
         ioEnvironment = new IOEnvironmentImpl(
                 new java.io.ByteArrayInputStream(input.getBytes()),
                 outputStream,
@@ -255,7 +255,6 @@ class GrepExecutorTest {
         );
 
         assertEquals(0, result);
-        assertTrue(errorStream.toString().contains("grep: warning: file "));
         assertEquals("should be processed\n", outputStream.toString());
     }
 
@@ -272,8 +271,8 @@ class GrepExecutorTest {
                 new CommandOptions(),
                 ioEnvironment
         );
-        assertEquals(1, result);
-        assertTrue(errorStream.toString().contains("grep: invalid number of arguments or empty input stream"));
+        assertEquals(0, result);
+        assertTrue(outputStream.toString().isEmpty());
     }
 
     @Test
@@ -293,5 +292,23 @@ class GrepExecutorTest {
 
         assertEquals(0, result);
         assertEquals("first\nfirst again\n", outputStream.toString());
+    }
+
+    @Test
+    void testWholeWordWithCyrillic() throws IOException {
+        String content = "и\n и \nи \n и\n и мир\nмир и\nигра\nмир\nпри\n";
+        Files.writeString(testFile, content, StandardOpenOption.WRITE);
+
+        Map<String, List<String>> options = new HashMap<>();
+        options.put("w", null);
+
+        int result = grepExecutor.execute(
+                List.of("и", testFile.toString()),
+                new CommandOptions(options),
+                ioEnvironment
+        );
+
+        assertEquals(0, result);
+        assertEquals("и\n и \nи \n и\n и мир\nмир и\n", outputStream.toString());
     }
 }
