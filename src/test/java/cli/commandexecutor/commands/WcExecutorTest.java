@@ -87,4 +87,5 @@ class WcExecutorTest {
         assertEquals("1 2 " + secondFile, lines[1]);
         assertEquals("3 7 total", lines[2]);
     }
+
 }
