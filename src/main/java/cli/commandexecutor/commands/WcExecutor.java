@@ -91,6 +91,7 @@ public class WcExecutor implements InternalCommandExecutor {
             try {
                 ioEnvironment.writeOutput(HELP_MESSAGE);
             } catch (IOException e) {
+                ioEnvironment.writeError("wc: cannot write help msg" + System.lineSeparator());
                 return 1;
             }
             return 0;
@@ -114,6 +115,7 @@ public class WcExecutor implements InternalCommandExecutor {
                 totalBytes += bytes;
                 printStatistics(options, output, file, lines, words, bytes);
             } catch (IOException e) {
+                ioEnvironment.writeError("wc: cannot read file " + file + System.lineSeparator());
                 return 1;
             }
         }

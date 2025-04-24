@@ -53,6 +53,4 @@ class PwdExecutorTest {
             assertEquals(launchDir + System.lineSeparator(), outputStream.toString(), "user.dir is not equal to PWD");
         }
     }
-
-
 }

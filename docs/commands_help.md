@@ -244,5 +244,3 @@ The above copyright notice and this permission notice shall be included in all
 > grep copy LICENSE | wc
 3 36 227
 ```
-
-
