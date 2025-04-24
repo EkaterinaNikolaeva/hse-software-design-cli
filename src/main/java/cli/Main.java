@@ -1,11 +1,46 @@
 package cli;
 
-public class Main {
-    public static String HelloWorld() {
-        return "HelloWorld";
-    }
+import cli.commandexecutor.CommandExecutorImpl;
+import cli.environment.EnvironmentImpl;
+import cli.exceptions.ExitCommandException;
+import cli.model.ParsedInput;
+import cli.parser.ParserImpl;
+import cli.pipelineexecutor.PipelineExecutorImpl;
 
-    public static void main(String[] args) {
-        System.out.println(HelloWorld());
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+        EnvironmentImpl environment = new EnvironmentImpl();
+        ParserImpl parser = new ParserImpl(environment);
+        CommandExecutorImpl commandExecutor = new CommandExecutorImpl(environment);
+        PipelineExecutorImpl pipelineExecutor = new PipelineExecutorImpl(commandExecutor);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter writer = new PrintWriter(System.out); // Added semicolon here
+
+
+        while (true) {
+            writer.print("> ");
+            writer.flush();
+            String input = reader.readLine();
+
+            if (input == null) {
+                break;
+            }
+
+            try {
+                ParsedInput parsedInput = parser.parse(input);
+                pipelineExecutor.execute(parsedInput, System.in, System.out);
+            } catch (Exception e) {
+                if (e.getCause() instanceof ExitCommandException) {
+                    return;
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 }
