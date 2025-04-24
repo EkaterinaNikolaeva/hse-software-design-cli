@@ -1,5 +1,6 @@
 package cli.pipelineexecutor;
 
+import cli.exceptions.TerminalErrorException;
 import cli.model.*;
 import cli.commandexecutor.CommandExecutor;
 
@@ -7,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -34,43 +36,45 @@ public class PipelineExecutorImpl implements PipelineExecutor {
      * @throws Exception If any error occurs during pipeline execution.
      */
     @Override
-    public void execute(ParsedInput parsedInput, InputStream firstInput, OutputStream lastOutput) throws Exception {
+    public void execute(ParsedInput parsedInput, InputStream firstInput, OutputStream lastOutput, OutputStream errorStream) throws Exception {
         List<Command> commands = parsedInput.commands();
         if (commands.isEmpty()) {
             return;
         }
         try (ExecutorService executor = Executors.newFixedThreadPool(commands.size())) {
             InputStream input = firstInput;
+            List<Future<Integer>> futures = new ArrayList<>();
 
             for (int i = 0; i < commands.size(); i++) {
                 Command command = commands.get(i);
 
-                final boolean isLastCommand = (i == commands.size() - 1);
+                boolean isLastCommand = (i == commands.size() - 1);
                 PipedOutputStream pipedOutputStream = !isLastCommand ? new PipedOutputStream() : null;
                 OutputStream currentOutput = !isLastCommand ? pipedOutputStream : lastOutput;
                 InputStream nextInput = !isLastCommand ? new PipedInputStream(pipedOutputStream) : null;
-                InputStream currentInput = input;
 
-                Future<Integer> future;
-                if (isLastCommand) {
-                    future = executor.submit(() -> {
-                        return commandExecutor.execute(command, currentInput, currentOutput, System.err);
-                    });
-                } else {
-                    future = executor.submit(() -> {
-                        try (OutputStream out = currentOutput) {
-                            return commandExecutor.execute(command, currentInput, out, System.err);
+                InputStream currentInput = input;
+                futures.add(executor.submit(() -> {
+                    try {
+                        int result = commandExecutor.execute(command, currentInput, currentOutput, errorStream);
+                        if (!isLastCommand) {
+                            currentOutput.close(); // Important to close the pipe to signal EOF
                         }
-                    });
-                }
-                future.get();
+                        return result;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
 
                 if (!isLastCommand) {
                     input = nextInput;
                 }
             }
-            lastOutput.flush();
-            executor.shutdown();
+            for (Future<Integer> future : futures) {
+                if (future.get() != 0) {
+                    throw new TerminalErrorException();
+                }
+            }
         }
     }
 }
