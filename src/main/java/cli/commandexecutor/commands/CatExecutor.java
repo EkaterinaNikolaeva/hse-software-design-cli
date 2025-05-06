@@ -1,11 +1,11 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystem;
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
-
 import java.nio.file.Path;
 import java.util.List;
 
@@ -17,6 +17,12 @@ import java.util.List;
 public class CatExecutor implements InternalCommandExecutor {
     private final static String HELP_MESSAGE = "Get files' content\n";
     private final static String FLAG_HELP_MESSAGE = "help";
+
+    private final FileSystem fileSystem;
+
+    public CatExecutor(FileSystem fileSystem) {
+        this.fileSystem = fileSystem;
+    }
 
     /**
      * Executes the "cat" command.
@@ -52,7 +58,7 @@ public class CatExecutor implements InternalCommandExecutor {
             }
         }
         for (String file : args) {
-            Path filePath = Path.of(file);
+            Path filePath = fileSystem.resolvePath(Path.of(file));
             try {
                 stringBuilder.append(Files.readString(filePath));
             } catch (IOException e) {

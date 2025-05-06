@@ -1,6 +1,7 @@
 package cli.commandexecutor;
 
 import cli.environment.EnvironmentImpl;
+import cli.filesystem.FileSystemImpl;
 import cli.model.Command;
 import cli.model.CommandOptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +12,8 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandExecutorImplTest {
 
@@ -19,7 +21,7 @@ class CommandExecutorImplTest {
 
     @BeforeEach
     public void setUp() {
-        executor = new CommandExecutorImpl(new EnvironmentImpl());
+        executor = new CommandExecutorImpl(new EnvironmentImpl(), new FileSystemImpl());
     }
 
     @Test

@@ -1,9 +1,10 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystem;
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -20,6 +21,12 @@ public class WcExecutor implements InternalCommandExecutor {
     private static final String FLAG_LINES = "l";
     private static final String FLAG_WORDS = "w";
     private static final String FLAG_BYTES = "c";
+
+    private final FileSystem fileSystem;
+
+    public WcExecutor(FileSystem fileSystem) {
+        this.fileSystem = fileSystem;
+    }
 
     private void printStatistics(CommandOptions options, @org.jetbrains.annotations.NotNull StringBuilder output,
                                  String file, int lines, int words, int bytes) {
@@ -104,7 +111,7 @@ public class WcExecutor implements InternalCommandExecutor {
         int totalBytes = 0;
         StringBuilder output = new StringBuilder();
         for (String file : args) {
-            Path filePath = Path.of(file);
+            Path filePath = fileSystem.resolvePath(Path.of(file));
             try {
                 String content = Files.readString(filePath);
                 int lines = content.split("\n").length;
