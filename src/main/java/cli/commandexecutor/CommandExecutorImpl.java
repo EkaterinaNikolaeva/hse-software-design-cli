@@ -9,6 +9,7 @@ import java.util.Map;
 import cli.commandexecutor.commands.*;
 import cli.environment.Environment;
 import cli.exceptions.ExitCommandException;
+import cli.filesystem.FileSystem;
 import cli.ioenvironment.IOEnvironmentImpl;
 import cli.model.Command;
 import org.jetbrains.annotations.NotNull;
@@ -20,21 +21,23 @@ import org.jetbrains.annotations.NotNull;
 public class CommandExecutorImpl implements CommandExecutor {
     private final Environment environment;
     private final Map<String, InternalCommandExecutor> builtInCommands = new HashMap<>();
+    private final FileSystem fileSystem;
 
-    public CommandExecutorImpl(Environment environment) {
+    public CommandExecutorImpl(Environment environment, FileSystem fileSystem) {
         this.environment = environment;
+        this.fileSystem = fileSystem;
         registerBuiltInCommands();
 
     }
 
     private void registerBuiltInCommands() {
-        builtInCommands.put("pwd", new PwdExecutor());
-        builtInCommands.put("cat", new CatExecutor());
+        builtInCommands.put("pwd", new PwdExecutor(fileSystem));
+        builtInCommands.put("cat", new CatExecutor(fileSystem));
         builtInCommands.put("echo", new EchoExecutor());
-        builtInCommands.put("wc", new WcExecutor());
+        builtInCommands.put("wc", new WcExecutor(fileSystem));
         builtInCommands.put("exit", new ExitExecutor());
         builtInCommands.put("=", new SetEnvironmentExecutor(environment));
-        builtInCommands.put("grep", new GrepExecutor());
+        builtInCommands.put("grep", new GrepExecutor(fileSystem));
     }
 
     private int executeBuiltIn(@NotNull Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
