@@ -38,6 +38,8 @@ public class CommandExecutorImpl implements CommandExecutor {
         builtInCommands.put("exit", new ExitExecutor());
         builtInCommands.put("=", new SetEnvironmentExecutor(environment));
         builtInCommands.put("grep", new GrepExecutor(fileSystem));
+        builtInCommands.put("ls", new LsExecutor(fileSystem));
+        builtInCommands.put("cd", new CdExecutor(fileSystem));
     }
 
     private int executeBuiltIn(@NotNull Command command, InputStream input, OutputStream output, OutputStream error) throws ExitCommandException {
