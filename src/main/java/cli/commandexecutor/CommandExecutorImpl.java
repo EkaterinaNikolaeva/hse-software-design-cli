@@ -1,11 +1,5 @@
 package cli.commandexecutor;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import cli.commandexecutor.commands.*;
 import cli.environment.Environment;
 import cli.exceptions.ExitCommandException;
@@ -13,6 +7,14 @@ import cli.filesystem.FileSystem;
 import cli.ioenvironment.IOEnvironmentImpl;
 import cli.model.Command;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The CommandExecutorImpl class implements the CommandExecutor interface.
@@ -55,7 +57,7 @@ public class CommandExecutorImpl implements CommandExecutor {
         commandWithArgs.add(command.name());
         commandWithArgs.addAll(command.args());
         ProcessBuilder processBuilder = new ProcessBuilder(commandWithArgs);
-        processBuilder.directory(new File(System.getProperty("user.dir")));
+        processBuilder.directory(fileSystem.getCurrentWorkingDir().toFile());
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();
@@ -84,8 +86,8 @@ public class CommandExecutorImpl implements CommandExecutor {
      * If the command is not built-in, it treats it as an external command and runs it via a new process.
      *
      * @param command The command to execute.
-     * @param input The input stream for the command.
-     * @param output The output stream for the command.
+     * @param input   The input stream for the command.
+     * @param output  The output stream for the command.
      * @return CommandResult containing the execution status and output.
      * @throws ExitCommandException If exit command was provided.
      */
