@@ -36,8 +36,8 @@ public class LsExecutor implements InternalCommandExecutor {
      */
     @Override
     public int execute(List<String> args, CommandOptions options, IOEnvironment ioEnvironment) {
-        if (!args.isEmpty()) {
-            ioEnvironment.writeError("ls does not take arguments" + System.lineSeparator());
+        if (args.size() > 1) {
+            ioEnvironment.writeError("ls can take arguments eq or less 1 arg" + System.lineSeparator());
             return 1;
         }
         if (options != null && options.containsOption(FLAG_HELP_MESSAGE)) {
@@ -51,7 +51,18 @@ public class LsExecutor implements InternalCommandExecutor {
         }
 
         try {
-            File[] files = fileSystem.getCurrentWorkingDir().toFile().listFiles();
+            File[] files;
+            if (args.isEmpty()) {
+                files = fileSystem.getCurrentWorkingDir().toFile().listFiles();
+            } else {
+                File dir = fileSystem.resolvePath(Path.of(args.getFirst())).toFile();
+                if (dir.exists() && dir.isDirectory()) {
+                    files = dir.listFiles();
+                } else {
+                    ioEnvironment.writeError("ls: cannot resolve path: " + args.getFirst() + System.lineSeparator());
+                    return 1;
+                }
+            }
 
             if (files == null) {
                 ioEnvironment.writeError("ls: cannot access the directory" + System.lineSeparator());
@@ -63,7 +74,7 @@ public class LsExecutor implements InternalCommandExecutor {
                 output.append(file.getName()).append(file.isDirectory() ? "/" : "").append(System.lineSeparator());
             }
 
-            ioEnvironment.writeOutput(output + System.lineSeparator());
+            ioEnvironment.writeOutput(output.toString());
         } catch (IOException e) {
             ioEnvironment.writeError("ls: cannot write to output stream" + System.lineSeparator());
             return 1;
