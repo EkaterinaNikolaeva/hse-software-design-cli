@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystemImpl;
 import cli.ioenvironment.IOEnvironment;
 import cli.ioenvironment.IOEnvironmentImpl;
 import cli.model.CommandOptions;
@@ -27,7 +28,7 @@ class WcExecutorTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        wcExecutor = new WcExecutor();
+        wcExecutor = new WcExecutor(new FileSystemImpl());
         testFile = Files.createTempFile("testFile", ".txt");
         outputStream = new ByteArrayOutputStream();
         errorStream = new ByteArrayOutputStream();
@@ -60,7 +61,7 @@ class WcExecutorTest {
 
     @Test
     void testWcNoFile() {
-        WcExecutor executor = new WcExecutor();
+        WcExecutor executor = new WcExecutor(new FileSystemImpl());
         String text = "hello\nworld\n";
         InputStream inputStream = new ByteArrayInputStream(text.getBytes());
         ioEnvironment = new IOEnvironmentImpl(inputStream, outputStream, errorStream);
@@ -77,7 +78,7 @@ class WcExecutorTest {
         Map<String, List<String>> options = new HashMap<>();
         options.put("w", null);
         options.put("l", null);
-        WcExecutor executor = new WcExecutor();
+        WcExecutor executor = new WcExecutor(new FileSystemImpl());
         int result = executor.execute(List.of(testFile.toString(), secondFile.toString()), new CommandOptions(options), ioEnvironment);
         assertEquals(0, result);
         String output = outputStream.toString();

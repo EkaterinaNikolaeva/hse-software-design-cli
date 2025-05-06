@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystem;
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
 
@@ -8,8 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The GrepExecutor class implements the InternalCommandExecutor interface
@@ -22,10 +23,16 @@ public class GrepExecutor implements InternalCommandExecutor {
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_RED = "\u001B[31m";
 
+    private final FileSystem fileSystem;
+
+    public GrepExecutor(FileSystem fileSystem) {
+        this.fileSystem = fileSystem;
+    }
+
     /**
      * Highlights all matches of the pattern in the line with red color
      *
-     * @param line   the input line
+     * @param line    the input line
      * @param pattern the compiled pattern to match
      * @return the line with highlighted matches
      */
@@ -83,7 +90,7 @@ public class GrepExecutor implements InternalCommandExecutor {
                 }
             }
 
-            if (useFile && !Files.exists(Path.of(fileName))) {
+            if (useFile && !Files.exists(fileSystem.resolvePath(Path.of(fileName)))) {
                 ioEnvironment.writeError("grep: " + fileName + ": No such file or directory" + System.lineSeparator());
                 return 1;
             }
@@ -98,7 +105,7 @@ public class GrepExecutor implements InternalCommandExecutor {
 
             List<String> lines;
             if (useFile) {
-                lines = Files.readAllLines(Path.of(fileName));
+                lines = Files.readAllLines(fileSystem.resolvePath(Path.of(fileName)));
             } else {
                 lines = new ArrayList<>();
                 String line;
@@ -107,7 +114,7 @@ public class GrepExecutor implements InternalCommandExecutor {
                 }
             }
 
-            for (int i = 0; i < lines.size();) {
+            for (int i = 0; i < lines.size(); ) {
                 String line = lines.get(i++);
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
