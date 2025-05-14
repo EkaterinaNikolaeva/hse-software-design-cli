@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystemImpl;
 import cli.ioenvironment.IOEnvironment;
 import cli.ioenvironment.IOEnvironmentImpl;
 import cli.model.CommandOptions;
@@ -26,7 +27,7 @@ class CatExecutorTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        catExecutor = new CatExecutor();
+        catExecutor = new CatExecutor(new FileSystemImpl());
         testFile = Files.createTempFile("testFile", ".txt");
         outputStream = new ByteArrayOutputStream();
         errorStream = new ByteArrayOutputStream();

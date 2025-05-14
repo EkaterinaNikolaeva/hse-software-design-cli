@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystemImpl;
 import cli.ioenvironment.IOEnvironment;
 import cli.ioenvironment.IOEnvironmentImpl;
 import cli.model.CommandOptions;
@@ -22,7 +23,8 @@ class PwdExecutorTest {
 
     @BeforeEach
     void setUp() {
-        pwdExecutor = new PwdExecutor();
+        FileSystemImpl fileSystem = new FileSystemImpl();
+        pwdExecutor = new PwdExecutor(fileSystem);
         outputStream = new ByteArrayOutputStream();
         errorStream = new ByteArrayOutputStream();
         ioEnvironment = new IOEnvironmentImpl(System.in, outputStream, errorStream);

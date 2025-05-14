@@ -1,5 +1,6 @@
 package cli.commandexecutor.commands;
 
+import cli.filesystem.FileSystem;
 import cli.ioenvironment.IOEnvironment;
 import cli.model.CommandOptions;
 
@@ -14,6 +15,11 @@ import java.util.List;
 public class PwdExecutor implements InternalCommandExecutor {
     private final static String HELP_MESSAGE = "Get current work directory\n";
     private final static String FLAG_HELP_MESSAGE = "help";
+    private final FileSystem fileSystem;
+
+    public PwdExecutor(FileSystem fileSystem) {
+        this.fileSystem = fileSystem;
+    }
 
     /**
      * Executes the "pwd" command.
@@ -41,9 +47,8 @@ public class PwdExecutor implements InternalCommandExecutor {
             }
             return 0;
         }
-        String curDir = System.getProperty("user.dir");
         try {
-            ioEnvironment.writeOutput(curDir + System.lineSeparator());
+            ioEnvironment.writeOutput(fileSystem.getCurrentWorkingDir() + System.lineSeparator());
         } catch (IOException e) {
             ioEnvironment.writeError("pwd: cannot write to output stream" + System.lineSeparator());
             return 1;
