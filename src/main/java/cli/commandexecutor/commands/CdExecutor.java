@@ -43,6 +43,11 @@ public class CdExecutor implements InternalCommandExecutor {
             return 1;
         }
 
+        if (!newCwd.toFile().isDirectory()) {
+            ioEnvironment.writeError("cd: it isn't a directory (%s)%s".formatted(newCwd.toString(), System.lineSeparator()));
+            return 1;
+        }
+
         fileSystem.changeDir(newCwd);
         return 0;
     }
