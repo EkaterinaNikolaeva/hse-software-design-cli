@@ -78,4 +78,58 @@ class CdExecutorTest {
 
         assertEquals(tempDir.toAbsolutePath().normalize() + System.lineSeparator(), pwdOutputStream.toString());
     }
+
+    @Test
+    void testCdThenCatWorksInNewDir() throws IOException {
+        Path testFile = Files.createFile(tempDir.resolve("testFile.txt"));
+        Files.writeString(testFile, "Hello, world!");
+
+        int cdResult = cdExecutor.execute(List.of(tempDir.toString()), new CommandOptions(), ioEnvironment);
+        assertEquals(0, cdResult);
+
+        CatExecutor catExecutor = new CatExecutor(fileSystem);
+        ByteArrayOutputStream catOutputStream = new ByteArrayOutputStream();
+        IOEnvironment catEnvironment = new IOEnvironmentImpl(System.in, catOutputStream, errorStream);
+
+        int catResult = catExecutor.execute(List.of("testFile.txt"), new CommandOptions(), catEnvironment);
+        assertEquals(0, catResult);
+
+        assertEquals("Hello, world!", catOutputStream.toString());
+    }
+
+    @Test
+    void testCdThenGrepWorksInNewDir() throws IOException {
+        Path testFile = Files.createFile(tempDir.resolve("testFile.txt"));
+        Files.writeString(testFile, "Hello, world!\nHello, Java!\n");
+
+        int cdResult = cdExecutor.execute(List.of(tempDir.toString()), new CommandOptions(), ioEnvironment);
+        assertEquals(0, cdResult);
+
+        GrepExecutor grepExecutor = new GrepExecutor(fileSystem);
+        ByteArrayOutputStream grepOutputStream = new ByteArrayOutputStream();
+        IOEnvironment grepEnvironment = new IOEnvironmentImpl(System.in, grepOutputStream, errorStream);
+
+        int grepResult = grepExecutor.execute(List.of("Hello, Java!", "testFile.txt"), new CommandOptions(), grepEnvironment);
+        assertEquals(0, grepResult);
+
+        assertEquals("Hello, Java!" + System.lineSeparator(), grepOutputStream.toString());
+    }
+
+    @Test
+    void testCdThenWcWorksInNewDir() throws IOException {
+        Path testFile = Files.createFile(tempDir.resolve("testFile.txt"));
+        Files.writeString(testFile, "Hello, world!Hello, Java!");
+
+        int cdResult = cdExecutor.execute(List.of(tempDir.toString()), new CommandOptions(), ioEnvironment);
+        assertEquals(0, cdResult);
+
+        WcExecutor wcExecutor = new WcExecutor(fileSystem);
+        ByteArrayOutputStream wcOutputStream = new ByteArrayOutputStream();
+        IOEnvironment wcEnvironment = new IOEnvironmentImpl(System.in, wcOutputStream, errorStream);
+
+        int wcResult = wcExecutor.execute(List.of("testFile.txt"), new CommandOptions(), wcEnvironment);
+        assertEquals(0, wcResult);
+
+        assertEquals("1 3 25 testFile.txt" + System.lineSeparator(), wcOutputStream.toString());
+    }
 }

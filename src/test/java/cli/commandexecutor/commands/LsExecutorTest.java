@@ -74,4 +74,5 @@ class LsExecutorTest {
         assertEquals(1, result);
         assertEquals("ls can take arguments eq or less 1 arg" + System.lineSeparator(), errorStream.toString());
     }
+
 }
