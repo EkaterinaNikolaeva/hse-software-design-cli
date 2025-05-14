@@ -8,14 +8,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LsExecutorTest {
     private LsExecutor lsExecutor;
@@ -23,6 +23,7 @@ class LsExecutorTest {
     private ByteArrayOutputStream errorStream;
     private IOEnvironment ioEnvironment;
     private FileSystemImpl fileSystem;
+    private CdExecutor cdExecutor;
 
     @BeforeEach
     void setUp() {
@@ -32,6 +33,7 @@ class LsExecutorTest {
                 )
         );
         lsExecutor = new LsExecutor(fileSystem);
+        cdExecutor = new CdExecutor(fileSystem);
         outputStream = new ByteArrayOutputStream();
         errorStream = new ByteArrayOutputStream();
         ioEnvironment = new IOEnvironmentImpl(System.in, outputStream, errorStream);
@@ -75,4 +77,20 @@ class LsExecutorTest {
         assertEquals("ls can take arguments eq or less 1 arg" + System.lineSeparator(), errorStream.toString());
     }
 
+    @Test
+    void testLsAfterCd() throws IOException {
+        int cdResult = cdExecutor.execute(List.of("./a"), new CommandOptions(), ioEnvironment);
+        assertEquals(0, cdResult);
+
+        int result = lsExecutor.execute(List.of(), new CommandOptions(), ioEnvironment);
+        assertEquals(0, result);
+        assertTrue(outputStream.toString().contains("3.txt"));
+
+        cdExecutor.execute(List.of("../b"), new CommandOptions(), ioEnvironment);
+        assertEquals(0, cdResult);
+
+        result = lsExecutor.execute(List.of(), new CommandOptions(), ioEnvironment);
+        assertEquals(0, result);
+        assertTrue(outputStream.toString().contains("4.txt"));
+    }
 }
