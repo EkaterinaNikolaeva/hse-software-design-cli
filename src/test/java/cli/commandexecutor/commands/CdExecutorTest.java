@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,6 +54,13 @@ class CdExecutorTest {
     void testExecuteToNonExistentDirectory() {
         String nonExistent = tempDir.resolve("doesNotExist").toString();
         int result = cdExecutor.execute(List.of(nonExistent), new CommandOptions(), ioEnvironment);
+        assertNotEquals(0, result);
+    }
+
+    @Test
+    void testExecuteToFile() throws IOException {
+        var file = Files.createFile(Path.of(tempDir.toAbsolutePath() + File.pathSeparator+ "1.txt"));
+        int result = cdExecutor.execute(List.of(file.normalize().toString()), new CommandOptions(), ioEnvironment);
         assertNotEquals(0, result);
     }
 

@@ -8,6 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +59,13 @@ class LsExecutorTest {
         int result = lsExecutor.execute(List.of("nonExistingDir"), new CommandOptions(), ioEnvironment);
         assertEquals(1, result);
         assertEquals("ls: cannot resolve path: nonExistingDir" + System.lineSeparator(), errorStream.toString());
+    }
+
+    @Test
+    void testExecuteWithFile() {
+        int result = lsExecutor.execute(List.of("1.txt"), new CommandOptions(), ioEnvironment);
+        assertEquals(1, result);
+        assertEquals("ls: cannot resolve path: 1.txt" + System.lineSeparator(), errorStream.toString());
     }
 
     @Test
